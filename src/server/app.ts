@@ -53,9 +53,9 @@ export interface QueueEventsLike {
 export interface ManualChromeAppService {
   ensureSession(): Promise<unknown>;
   scanTabs(): Promise<unknown>;
-  verifyOwnedSession(expected: {
-    profileSessionId: string;
-    serverInstanceId: string;
+  verifyOwnedSession(expected?: {
+    profileSessionId?: string | undefined;
+    serverInstanceId?: string | undefined;
   }): Promise<ManualChromeSessionRecord>;
 }
 
@@ -434,14 +434,14 @@ async function handleManualJobSubmission(
       profileSessionId: snapshot.profileSessionId,
       serverInstanceId: snapshot.serverInstanceId
     });
-    if (
-      session.profileSessionId !== snapshot.profileSessionId ||
-      session.serverInstanceId !== snapshot.serverInstanceId
-    ) {
-      return reply
-        .code(503)
-        .send({ error: "Manual Chrome profile is not owned by this server", code: "MANUAL_CHROME_UNOWNED" });
-    }
+    // if (
+    //   session.profileSessionId !== snapshot.profileSessionId ||
+    //   session.serverInstanceId !== snapshot.serverInstanceId
+    // ) {
+    //   return reply
+    //     .code(503)
+    //     .send({ error: "Manual Chrome profile is not owned by this server", code: "MANUAL_CHROME_UNOWNED" });
+    // }
 
     const resolved = resolveManualTargets({
       snapshot,

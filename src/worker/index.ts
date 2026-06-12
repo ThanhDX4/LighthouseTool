@@ -23,7 +23,8 @@ const worker = createAuditWorker({
     ? {
         allowedHosts: config.allowedHosts,
         store: createManualChromeStore(redis),
-        maxEvidenceBytes: config.manualChrome.maxEvidenceBytes
+        maxEvidenceBytes: config.manualChrome.maxEvidenceBytes,
+        mode: config.manualChrome.mode
       }
     : undefined
 });

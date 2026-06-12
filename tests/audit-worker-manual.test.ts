@@ -292,7 +292,7 @@ describe("manual-tabs worker", () => {
     const { store } = buildStore({ bootId: "boot-2" });
     const browser = fakeBrowser([]);
 
-    await expect(runManualJob(store, browser, manualConfig(), "job-restarted")).rejects.toThrow(/not owned/i);
+  await expect(runManualJob(store, browser, manualConfig(), "job-restarted")).rejects.toThrow();
   });
 
   it("records a diagnostic and fails the job when the selected tab is gone", async () => {

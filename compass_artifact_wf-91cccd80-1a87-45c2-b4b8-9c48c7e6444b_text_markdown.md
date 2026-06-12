@@ -67,21 +67,21 @@ Hệ thống gồm bốn thành phần logic chạy trong **một container Dock
 
 ### 3.2 Tech stack chính thức
 
-| Lớp | Lựa chọn | Phiên bản |
-|---|---|---|
-| Runtime | Node.js LTS | **22.x** (yêu cầu của Lighthouse 13) |
-| Web framework | Fastify | **^4.28** |
-| Validation | Zod hoặc JSON Schema (Fastify built-in) | latest |
-| Job queue | BullMQ + ioredis | **^5.x** / **^5.x** |
-| Queue backing | Redis | **7-alpine** |
-| Lighthouse | `lighthouse` (npm) | **^13.x** |
-| Trình duyệt control | `chrome-launcher` + `puppeteer` | **^1.x** / **^22.x** |
-| Excel | `exceljs` | **^4.4** |
-| Logger | Pino (Fastify mặc định) | latest |
-| Frontend | React + Vite + TypeScript | **18 / 5 / 5** |
-| UI lib | Mantine (hoặc shadcn/ui) | latest |
-| Reverse proxy | NGINX hoặc Caddy (HTTPS terminator) | latest |
-| Container base | `node:22-bookworm-slim` + google-chrome-stable | latest stable |
+| Lớp                 | Lựa chọn                                       | Phiên bản                            |
+| ------------------- | ---------------------------------------------- | ------------------------------------ |
+| Runtime             | Node.js LTS                                    | **22.x** (yêu cầu của Lighthouse 13) |
+| Web framework       | Fastify                                        | **^4.28**                            |
+| Validation          | Zod hoặc JSON Schema (Fastify built-in)        | latest                               |
+| Job queue           | BullMQ + ioredis                               | **^5.x** / **^5.x**                  |
+| Queue backing       | Redis                                          | **7-alpine**                         |
+| Lighthouse          | `lighthouse` (npm)                             | **^13.x**                            |
+| Trình duyệt control | `chrome-launcher` + `puppeteer`                | **^1.x** / **^22.x**                 |
+| Excel               | `exceljs`                                      | **^4.4**                             |
+| Logger              | Pino (Fastify mặc định)                        | latest                               |
+| Frontend            | React + Vite + TypeScript                      | **18 / 5 / 5**                       |
+| UI lib              | Mantine (hoặc shadcn/ui)                       | latest                               |
+| Reverse proxy       | NGINX hoặc Caddy (HTTPS terminator)            | latest                               |
+| Container base      | `node:22-bookworm-slim` + google-chrome-stable | latest stable                        |
 
 ### 3.3 Lý do lựa chọn từng thành phần
 
@@ -106,7 +106,7 @@ Các yêu cầu được đánh số có tiền tố **FR-** để dev team tham
 **FR-01.2.** Form phải có một section **"Authentication (tùy chọn)"** có thể mở/đóng (collapsed mặc định), gồm hai sub-section độc lập có thể bật/tắt riêng:
 
 - **Lớp 1: HTTP Basic Auth (cho staging có nginx)** — checkbox bật; nếu bật, hiển thị `Username` và `Password` (cả hai là `type="password"` để mask).
-- **Lớp 2: Form Login** — checkbox bật; nếu bật, hiển thị: **Login URL** (string URL, bắt buộc nếu bật); **Username selector** (CSS selector, mặc định `input[name="email"]`); **Username value**; **Password selector** (mặc định `input[name="password"]`); **Password value** (`type="password"`); **Submit selector** (mặc định `button[type="submit"]`); **Post-login wait** (dropdown: "Navigation" — đợi `page.waitForNavigation()`; "Selector" — chờ một selector cụ thể xuất hiện, kèm ô input selector; "Delay" — chờ N ms).
+- **Lớp 2: Form Login** — checkbox bật; nếu bật, hiển thị: **Login URL** (string URL, bắt buộc nếu bật); **Username selector** (CSS selector, mặc định `input[name="LOGIN_EMAIL"]`); **Username value**; **Password selector** (mặc định `input[name="PASSWORD"]`); **Password value** (`type="password"`); **Submit selector** (mặc định `button[type="submit"]`); **Post-login wait** (dropdown: "Navigation" — đợi `page.waitForNavigation()`; "Selector" — chờ một selector cụ thể xuất hiện, kèm ô input selector; "Delay" — chờ N ms).
 
 **FR-01.3.** Nút **"Bắt đầu audit"** chỉ được phép bấm khi form hợp lệ (URL parse được, có ít nhất một path, có ít nhất một form factor). Khi bấm, form bị disable và chuyển sang trang **"Job progress"**.
 
@@ -169,16 +169,16 @@ Khi người dùng chọn "Fast 3G": `{ rttMs: 80, throughputKbps: 1638.4, cpuSl
 
 ```json
 {
-  "percent": 42,
-  "phase": "lighthouse-run",
-  "message": "Đang chạy Lighthouse 3/5 cho /home (mobile)",
-  "currentRoute": "/home",
-  "formFactor": "mobile",
-  "runIndex": 3,
-  "runsTotal": 5,
-  "completedRuns": 12,
-  "totalRuns": 30,
-  "etaSeconds": 540
+    "percent": 42,
+    "phase": "lighthouse-run",
+    "message": "Đang chạy Lighthouse 3/5 cho /home (mobile)",
+    "currentRoute": "/home",
+    "formFactor": "mobile",
+    "runIndex": 3,
+    "runsTotal": 5,
+    "completedRuns": 12,
+    "totalRuns": 30,
+    "etaSeconds": 540
 }
 ```
 
@@ -223,16 +223,16 @@ ETA tính bằng moving average của duration các run đã xong × số run c�
 
 ### 5.2 Sự kiện SSE chuẩn hoá
 
-| Event name | Payload | Khi nào phát |
-|---|---|---|
-| `queued` | `{ jobId, queuePosition }` | Ngay sau khi enqueue |
-| `started` | `{ jobId, startedAt, totalRuns }` | Worker pick up job |
-| `progress` | (xem FR-04.8) | Sau mỗi run Lighthouse hoàn tất |
-| `warn` | `{ route, formFactor, runIndex, message }` | Run đơn lẻ fail nhưng tiếp tục |
-| `route-completed` | `{ route, formFactor, scores }` | Sau khi xong 5 run của 1 cặp |
-| `excel-generating` | `{ message: "Đang tạo file Excel..." }` | Bắt đầu build workbook |
-| `done` | `{ downloadUrl, downloadToken, summary }` | Job kết thúc thành công/partial |
-| `failed` | `{ error, code }` | Job lỗi không hồi phục |
+| Event name         | Payload                                    | Khi nào phát                    |
+| ------------------ | ------------------------------------------ | ------------------------------- |
+| `queued`           | `{ jobId, queuePosition }`                 | Ngay sau khi enqueue            |
+| `started`          | `{ jobId, startedAt, totalRuns }`          | Worker pick up job              |
+| `progress`         | (xem FR-04.8)                              | Sau mỗi run Lighthouse hoàn tất |
+| `warn`             | `{ route, formFactor, runIndex, message }` | Run đơn lẻ fail nhưng tiếp tục  |
+| `route-completed`  | `{ route, formFactor, scores }`            | Sau khi xong 5 run của 1 cặp    |
+| `excel-generating` | `{ message: "Đang tạo file Excel..." }`    | Bắt đầu build workbook          |
+| `done`             | `{ downloadUrl, downloadToken, summary }`  | Job kết thúc thành công/partial |
+| `failed`           | `{ error, code }`                          | Job lỗi không hồi phục          |
 
 ### 5.3 Luồng lỗi (Error flows)
 
@@ -280,24 +280,24 @@ Workbook dùng font **Calibri 11**, header row màu nền `#1F3864` (navy đậm
 
 **Cấu trúc cột:**
 
-| Col | Header | Loại | Width |
-|---|---|---|---|
-| A | Route (path) | text | 28 |
-| B | URL đầy đủ | hyperlink | 50 |
-| C | Form factor | text (Mobile/Desktop) | 12 |
-| D | Performance | number 0–100, CF score | 14 |
-| E | Accessibility | number 0–100, CF score | 14 |
-| F | Best Practices | number 0–100, CF score | 16 |
-| G | SEO | number 0–100, CF score | 10 |
-| H | PWA | number 0–100 hoặc "N/A", CF score | 10 |
-| I | LCP (ms) | number, CF metric LCP | 12 |
-| J | CLS | number 3 decimals, CF metric CLS | 10 |
-| K | TBT (ms) | number, CF metric TBT | 12 |
-| L | FCP (ms) | number, CF metric FCP | 12 |
-| M | Speed Index (ms) | number, CF metric SI | 14 |
-| N | TTI (ms) | number, CF metric TTI | 12 |
-| O | Runs OK | text "5/5" hoặc "4/5" | 10 |
-| P | Status | "OK" / "Degraded" / "Failed" | 12 |
+| Col | Header           | Loại                              | Width |
+| --- | ---------------- | --------------------------------- | ----- |
+| A   | Route (path)     | text                              | 28    |
+| B   | URL đầy đủ       | hyperlink                         | 50    |
+| C   | Form factor      | text (Mobile/Desktop)             | 12    |
+| D   | Performance      | number 0–100, CF score            | 14    |
+| E   | Accessibility    | number 0–100, CF score            | 14    |
+| F   | Best Practices   | number 0–100, CF score            | 16    |
+| G   | SEO              | number 0–100, CF score            | 10    |
+| H   | PWA              | number 0–100 hoặc "N/A", CF score | 10    |
+| I   | LCP (ms)         | number, CF metric LCP             | 12    |
+| J   | CLS              | number 3 decimals, CF metric CLS  | 10    |
+| K   | TBT (ms)         | number, CF metric TBT             | 12    |
+| L   | FCP (ms)         | number, CF metric FCP             | 12    |
+| M   | Speed Index (ms) | number, CF metric SI              | 14    |
+| N   | TTI (ms)         | number, CF metric TTI             | 12    |
+| O   | Runs OK          | text "5/5" hoặc "4/5"             | 10    |
+| P   | Status           | "OK" / "Degraded" / "Failed"      | 12    |
 
 Hàng cuối: hàng **AVERAGE** in đậm, tô nền xám nhạt `#F2F2F2`, dùng công thức `=AVERAGE(D2:Dx)` cho mỗi cột số.
 
@@ -306,17 +306,18 @@ Hàng cuối: hàng **AVERAGE** in đậm, tô nền xám nhạt `#F2F2F2`, dùn
 Mỗi route có **một sheet riêng**, đặt tên theo path đã sanitize. Cấu trúc gồm **4 block dọc**:
 
 **Block 1 — Header (rows 1–3)**
+
 - Row 1 (merged A1:H1): `"Lighthouse Report — {route}"`, font 14 bold.
 - Row 2 (merged A2:H2): URL đầy đủ, hyperlink, font xanh underline.
 - Row 3 (merged A3:H3): `"Audited at {ISO timestamp} · Lighthouse {version} · Chrome {version}"`.
 
 **Block 2 — Category scores cho cả 2 form factor (rows 5–9)**
 
-| | A | B | C | D | E | F |
-|---|---|---|---|---|---|---|
-| Row 5 (header) | Form factor | Performance | Accessibility | Best Practices | SEO | PWA |
-| Row 6 | Mobile | (score) | (score) | (score) | (score) | (score) |
-| Row 7 | Desktop | (score) | (score) | (score) | (score) | (score) |
+|                | A           | B           | C             | D              | E       | F       |
+| -------------- | ----------- | ----------- | ------------- | -------------- | ------- | ------- |
+| Row 5 (header) | Form factor | Performance | Accessibility | Best Practices | SEO     | PWA     |
+| Row 6          | Mobile      | (score)     | (score)       | (score)        | (score) | (score) |
+| Row 7          | Desktop     | (score)     | (score)       | (score)        | (score) | (score) |
 
 CF score áp lên B6:F7.
 
@@ -324,15 +325,15 @@ CF score áp lên B6:F7.
 
 Cấu trúc bảng dọc; mỗi metric một dòng, hai cột giá trị (Mobile / Desktop) + hai cột score quy đổi:
 
-| Metric | Unit | Mobile value | Mobile score | Desktop value | Desktop score | Target (Good) |
-|---|---|---|---|---|---|---|
-| LCP | ms | (numericValue) | (score×100) | ... | ... | ≤ 2500 |
-| CLS | unitless | (3 decimals) | (score×100) | ... | ... | ≤ 0.1 |
-| TBT | ms | ... | ... | ... | ... | ≤ 200 |
-| FCP | ms | ... | ... | ... | ... | ≤ 1800 |
-| Speed Index | ms | ... | ... | ... | ... | ≤ 3400 |
-| TTI | ms | ... | ... | ... | ... | ≤ 3800 |
-| Max Pot. FID | ms | ... | ... | ... | ... | ≤ 130 |
+| Metric       | Unit     | Mobile value   | Mobile score | Desktop value | Desktop score | Target (Good) |
+| ------------ | -------- | -------------- | ------------ | ------------- | ------------- | ------------- |
+| LCP          | ms       | (numericValue) | (score×100)  | ...           | ...           | ≤ 2500        |
+| CLS          | unitless | (3 decimals)   | (score×100)  | ...           | ...           | ≤ 0.1         |
+| TBT          | ms       | ...            | ...          | ...           | ...           | ≤ 200         |
+| FCP          | ms       | ...            | ...          | ...           | ...           | ≤ 1800        |
+| Speed Index  | ms       | ...            | ...          | ...           | ...           | ≤ 3400        |
+| TTI          | ms       | ...            | ...          | ...           | ...           | ≤ 3800        |
+| Max Pot. FID | ms       | ...            | ...          | ...           | ...           | ≤ 130         |
 
 CF metric áp lên cột "value" theo ngưỡng từng metric (§7.6). CF score áp lên cột "score".
 
@@ -370,10 +371,10 @@ Bảng 5–10 audit có "opportunity savings" lớn nhất (từ `lhr.audits[...
 
 Bảng phẳng các sự kiện cần chú ý từ tất cả các run:
 
-| Timestamp | Route | Form Factor | Run | Severity | Code | Message |
-|---|---|---|---|---|---|---|
-| 2026-06-05T10:11:12Z | /checkout | mobile | 3 | error | NO_FCP | Lighthouse did not detect FCP within 30s |
-| ... | ... | ... | ... | warning | ... | ... |
+| Timestamp            | Route     | Form Factor | Run | Severity | Code   | Message                                  |
+| -------------------- | --------- | ----------- | --- | -------- | ------ | ---------------------------------------- |
+| 2026-06-05T10:11:12Z | /checkout | mobile      | 3   | error    | NO_FCP | Lighthouse did not detect FCP within 30s |
+| ...                  | ...       | ...         | ... | warning  | ...    | ...                                      |
 
 Lấy từ `lhr.runtimeError`, `lhr.runWarnings`, và các exception worker bắt được.
 
@@ -410,15 +411,15 @@ Auth                    Basic Auth: enabled; Form Login: enabled
 
 **Metric numeric values** (ngưỡng từ developer.chrome.com và Core Web Vitals):
 
-| Metric | Good (xanh) | Needs Improvement (cam) | Poor (đỏ) |
-|---|---|---|---|
-| LCP (ms) | ≤ 2500 | ≤ 4000 | > 4000 |
-| CLS (unitless) | ≤ 0.1 | ≤ 0.25 | > 0.25 |
-| TBT (ms) | ≤ 200 | ≤ 600 | > 600 |
-| FCP (ms) | ≤ 1800 | ≤ 3000 | > 3000 |
-| Speed Index (ms) | ≤ 3400 | ≤ 5800 | > 5800 |
-| TTI (ms) | ≤ 3800 | ≤ 7300 | > 7300 |
-| INP (ms, nếu có) | ≤ 200 | ≤ 500 | > 500 |
+| Metric           | Good (xanh) | Needs Improvement (cam) | Poor (đỏ) |
+| ---------------- | ----------- | ----------------------- | --------- |
+| LCP (ms)         | ≤ 2500      | ≤ 4000                  | > 4000    |
+| CLS (unitless)   | ≤ 0.1       | ≤ 0.25                  | > 0.25    |
+| TBT (ms)         | ≤ 200       | ≤ 600                   | > 600     |
+| FCP (ms)         | ≤ 1800      | ≤ 3000                  | > 3000    |
+| Speed Index (ms) | ≤ 3400      | ≤ 5800                  | > 5800    |
+| TTI (ms)         | ≤ 3800      | ≤ 7300                  | > 7300    |
+| INP (ms, nếu có) | ≤ 200       | ≤ 500                   | > 500     |
 
 Dùng ExcelJS `addConditionalFormatting` với 3 rule `cellIs` (`lessThanOrEqual` good, `lessThanOrEqual` needs-imp, `greaterThan` poor) cho mỗi range cell metric.
 
@@ -430,62 +431,109 @@ Dùng ExcelJS `addConditionalFormatting` với 3 rule `cellIs` (`lessThanOrEqual
 
 ```json
 {
-  "type": "object",
-  "required": ["baseUrl", "paths", "formFactors"],
-  "properties": {
-    "baseUrl":     { "type": "string", "format": "uri" },
-    "displayName": { "type": "string", "maxLength": 80 },
-    "paths":       { "type": "array", "minItems": 1, "maxItems": 50,
-                     "items": { "type": "string", "pattern": "^/" } },
-    "formFactors": { "type": "array", "minItems": 1,
-                     "items": { "enum": ["mobile", "desktop"] } },
-    "categories":  { "type": "array", "default": ["performance","accessibility","best-practices","seo"],
-                     "items": { "enum": ["performance","accessibility","best-practices","seo","pwa"] } },
-    "runsPerPage": { "type": "integer", "minimum": 1, "maximum": 11, "default": 5 },
-    "throttling": {
-      "type": "object",
-      "properties": {
-        "preset": { "enum": ["slow-4g","fast-3g","slow-3g","custom"], "default": "slow-4g" },
-        "custom": {
-          "type": "object",
-          "properties": {
-            "rttMs":                 { "type": "number", "minimum": 0 },
-            "throughputKbps":        { "type": "number", "minimum": 0 },
-            "cpuSlowdownMultiplier": { "type": "number", "minimum": 1, "maximum": 20 }
-          }
+    "type": "object",
+    "required": ["baseUrl", "paths", "formFactors"],
+    "properties": {
+        "baseUrl": { "type": "string", "format": "uri" },
+        "displayName": { "type": "string", "maxLength": 80 },
+        "paths": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 50,
+            "items": { "type": "string", "pattern": "^/" }
+        },
+        "formFactors": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "enum": ["mobile", "desktop"] }
+        },
+        "categories": {
+            "type": "array",
+            "default": [
+                "performance",
+                "accessibility",
+                "best-practices",
+                "seo"
+            ],
+            "items": {
+                "enum": [
+                    "performance",
+                    "accessibility",
+                    "best-practices",
+                    "seo",
+                    "pwa"
+                ]
+            }
+        },
+        "runsPerPage": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 11,
+            "default": 5
+        },
+        "throttling": {
+            "type": "object",
+            "properties": {
+                "preset": {
+                    "enum": ["slow-4g", "fast-3g", "slow-3g", "custom"],
+                    "default": "slow-4g"
+                },
+                "custom": {
+                    "type": "object",
+                    "properties": {
+                        "rttMs": { "type": "number", "minimum": 0 },
+                        "throughputKbps": { "type": "number", "minimum": 0 },
+                        "cpuSlowdownMultiplier": {
+                            "type": "number",
+                            "minimum": 1,
+                            "maximum": 20
+                        }
+                    }
+                }
+            }
+        },
+        "basicAuth": {
+            "type": "object",
+            "properties": {
+                "enabled": { "type": "boolean", "default": false },
+                "username": { "type": "string" },
+                "password": { "type": "string" }
+            }
+        },
+        "formLogin": {
+            "type": "object",
+            "properties": {
+                "enabled": { "type": "boolean", "default": false },
+                "loginUrl": { "type": "string", "format": "uri" },
+                "usernameSelector": {
+                    "type": "string",
+                    "default": "input[name='email']"
+                },
+                "username": { "type": "string" },
+                "passwordSelector": {
+                    "type": "string",
+                    "default": "input[name='password']"
+                },
+                "password": { "type": "string" },
+                "submitSelector": {
+                    "type": "string",
+                    "default": "button[type='submit']"
+                },
+                "postLogin": {
+                    "type": "object",
+                    "properties": {
+                        "mode": {
+                            "enum": ["navigation", "selector", "delay"],
+                            "default": "navigation"
+                        },
+                        "selector": { "type": "string" },
+                        "delayMs": { "type": "integer" },
+                        "timeoutMs": { "type": "integer", "default": 30000 }
+                    }
+                }
+            }
         }
-      }
-    },
-    "basicAuth": {
-      "type": "object",
-      "properties": {
-        "enabled":  { "type": "boolean", "default": false },
-        "username": { "type": "string" },
-        "password": { "type": "string" }
-      }
-    },
-    "formLogin": {
-      "type": "object",
-      "properties": {
-        "enabled":          { "type": "boolean", "default": false },
-        "loginUrl":         { "type": "string", "format": "uri" },
-        "usernameSelector": { "type": "string", "default": "input[name='email']" },
-        "username":         { "type": "string" },
-        "passwordSelector": { "type": "string", "default": "input[name='password']" },
-        "password":         { "type": "string" },
-        "submitSelector":   { "type": "string", "default": "button[type='submit']" },
-        "postLogin": {
-          "type": "object",
-          "properties": {
-            "mode":        { "enum": ["navigation","selector","delay"], "default": "navigation" },
-            "selector":    { "type": "string" },
-            "delayMs":     { "type": "integer" },
-            "timeoutMs":   { "type": "integer", "default": 30000 }
-          }
-        }
-      }
     }
-  }
 }
 ```
 
@@ -493,17 +541,18 @@ Dùng ExcelJS `addConditionalFormatting` với 3 rule `cellIs` (`lessThanOrEqual
 
 ```ts
 interface AuditJobData {
-  jobId: string;
-  config: AuditConfig;             // payload trên với password đã thay bằng ciphertext
-  encryption: { iv: string; tag: string };  // metadata để decrypt
-  createdAt: string;               // ISO
-  createdBy?: string;              // từ session/header
+    jobId: string;
+    config: AuditConfig; // payload trên với password đã thay bằng ciphertext
+    encryption: { iv: string; tag: string }; // metadata để decrypt
+    createdAt: string; // ISO
+    createdBy?: string; // từ session/header
 }
 ```
 
 ### 8.3 Job result lưu trên đĩa
 
 `/var/lib/lh-audit/jobs/{jobId}/`:
+
 - `report.xlsx` — file Excel cuối cùng (file người dùng tải về)
 - `report.xlsx.sha256` — hash
 - `meta.json` — `{ jobId, summary, lighthouseVersion, chromeVersion, startedAt, finishedAt, status }`
@@ -584,116 +633,165 @@ lh-audit-tool/
 ### 10.2 Recipe: chạy 1 lần Lighthouse với cả 2 lớp auth (TypeScript ESM)
 
 ```ts
-import lighthouse from 'lighthouse';
-import * as chromeLauncher from 'chrome-launcher';
-import puppeteer from 'puppeteer';
-import desktopConfig from 'lighthouse/core/config/desktop-config.js';
-import type { Flags } from 'lighthouse/types/externs.js';
+import lighthouse from "lighthouse";
+import * as chromeLauncher from "chrome-launcher";
+import puppeteer from "puppeteer";
+import desktopConfig from "lighthouse/core/config/desktop-config.js";
+import type { Flags } from "lighthouse/types/externs.js";
 
 export interface RunOnceOpts {
-  url: string;
-  formFactor: 'mobile' | 'desktop';
-  throttling?: any;
-  basicAuth?: { username: string; password: string };
-  formLogin?: {
-    loginUrl: string; usernameSelector: string; passwordSelector: string;
-    submitSelector: string; username: string; password: string;
-    postLogin: { mode: 'navigation' | 'selector' | 'delay'; selector?: string; delayMs?: number; timeoutMs: number };
-  };
-  categories: string[];
-  timeoutMs?: number;
+    url: string;
+    formFactor: "mobile" | "desktop";
+    throttling?: any;
+    basicAuth?: { username: string; password: string };
+    formLogin?: {
+        loginUrl: string;
+        usernameSelector: string;
+        passwordSelector: string;
+        submitSelector: string;
+        username: string;
+        password: string;
+        postLogin: {
+            mode: "navigation" | "selector" | "delay";
+            selector?: string;
+            delayMs?: number;
+            timeoutMs: number;
+        };
+    };
+    categories: string[];
+    timeoutMs?: number;
 }
 
 export async function runOnce(opts: RunOnceOpts) {
-  const chrome = await chromeLauncher.launch({
-    chromeFlags: ['--headless=new', '--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
-  });
-  try {
-    const extraHeaders: Record<string, string> = {};
-    if (opts.basicAuth) {
-      extraHeaders.Authorization =
-        'Basic ' + Buffer.from(`${opts.basicAuth.username}:${opts.basicAuth.password}`).toString('base64');
+    const chrome = await chromeLauncher.launch({
+        chromeFlags: [
+            "--headless=new",
+            "--no-sandbox",
+            "--disable-dev-shm-usage",
+            "--disable-gpu",
+        ],
+    });
+    try {
+        const extraHeaders: Record<string, string> = {};
+        if (opts.basicAuth) {
+            extraHeaders.Authorization =
+                "Basic " +
+                Buffer.from(
+                    `${opts.basicAuth.username}:${opts.basicAuth.password}`,
+                ).toString("base64");
+        }
+
+        // (a) Nếu có form login → drive Puppeteer trên cùng Chrome instance
+        let page: puppeteer.Page | undefined;
+        let browser: puppeteer.Browser | undefined;
+        if (opts.formLogin) {
+            browser = await puppeteer.connect({
+                browserURL: `http://localhost:${chrome.port}`,
+            });
+            [page] = await browser.pages();
+            if (Object.keys(extraHeaders).length)
+                await page.setExtraHTTPHeaders(extraHeaders);
+            await page.goto(opts.formLogin.loginUrl, {
+                waitUntil: "networkidle2",
+            });
+            await page.type(
+                opts.formLogin.usernameSelector,
+                opts.formLogin.username,
+            );
+            await page.type(
+                opts.formLogin.passwordSelector,
+                opts.formLogin.password,
+            );
+            const submit = page.click(opts.formLogin.submitSelector);
+            const wait = (() => {
+                const m = opts.formLogin.postLogin;
+                if (m.mode === "navigation")
+                    return page!.waitForNavigation({ timeout: m.timeoutMs });
+                if (m.mode === "selector")
+                    return page!.waitForSelector(m.selector!, {
+                        timeout: m.timeoutMs,
+                    });
+                return new Promise((r) => setTimeout(r, m.delayMs ?? 2000));
+            })();
+            await Promise.all([submit, wait]);
+        }
+
+        // (b) Lighthouse flags
+        const flags: Flags = {
+            port: chrome.port,
+            output: "json",
+            logLevel: "error",
+            onlyCategories: opts.categories,
+            formFactor: opts.formFactor,
+            extraHeaders,
+            disableStorageReset: !!opts.formLogin, // bắt buộc khi dùng session cookie
+        };
+
+        // (c) Lấy config cho desktop hoặc undefined (mobile mặc định)
+        const cfg = opts.formFactor === "desktop" ? desktopConfig : undefined;
+
+        // (d) Throttling override
+        if (opts.throttling) {
+            flags.throttlingMethod = "simulate";
+            flags.throttling = opts.throttling;
+        }
+
+        // (e) Race với timeout
+        const lhPromise = page
+            ? lighthouse(opts.url, flags, cfg, page)
+            : lighthouse(opts.url, flags, cfg);
+        const result = await Promise.race([
+            lhPromise,
+            new Promise<never>((_, rej) =>
+                setTimeout(
+                    () => rej(new Error("LIGHTHOUSE_TIMEOUT")),
+                    opts.timeoutMs ?? 120_000,
+                ),
+            ),
+        ]);
+        if (!result) throw new Error("Lighthouse returned null");
+        if (result.lhr.runtimeError)
+            throw new Error(`runtimeError: ${result.lhr.runtimeError.code}`);
+
+        if (browser) await browser.disconnect();
+        return result.lhr;
+    } finally {
+        await chrome.kill();
     }
-
-    // (a) Nếu có form login → drive Puppeteer trên cùng Chrome instance
-    let page: puppeteer.Page | undefined;
-    let browser: puppeteer.Browser | undefined;
-    if (opts.formLogin) {
-      browser = await puppeteer.connect({ browserURL: `http://localhost:${chrome.port}` });
-      [page] = await browser.pages();
-      if (Object.keys(extraHeaders).length) await page.setExtraHTTPHeaders(extraHeaders);
-      await page.goto(opts.formLogin.loginUrl, { waitUntil: 'networkidle2' });
-      await page.type(opts.formLogin.usernameSelector, opts.formLogin.username);
-      await page.type(opts.formLogin.passwordSelector, opts.formLogin.password);
-      const submit = page.click(opts.formLogin.submitSelector);
-      const wait = (() => {
-        const m = opts.formLogin.postLogin;
-        if (m.mode === 'navigation') return page!.waitForNavigation({ timeout: m.timeoutMs });
-        if (m.mode === 'selector')   return page!.waitForSelector(m.selector!, { timeout: m.timeoutMs });
-        return new Promise(r => setTimeout(r, m.delayMs ?? 2000));
-      })();
-      await Promise.all([submit, wait]);
-    }
-
-    // (b) Lighthouse flags
-    const flags: Flags = {
-      port: chrome.port,
-      output: 'json',
-      logLevel: 'error',
-      onlyCategories: opts.categories,
-      formFactor: opts.formFactor,
-      extraHeaders,
-      disableStorageReset: !!opts.formLogin, // bắt buộc khi dùng session cookie
-    };
-
-    // (c) Lấy config cho desktop hoặc undefined (mobile mặc định)
-    const cfg = opts.formFactor === 'desktop' ? desktopConfig : undefined;
-
-    // (d) Throttling override
-    if (opts.throttling) {
-      flags.throttlingMethod = 'simulate';
-      flags.throttling = opts.throttling;
-    }
-
-    // (e) Race với timeout
-    const lhPromise = page
-      ? lighthouse(opts.url, flags, cfg, page)
-      : lighthouse(opts.url, flags, cfg);
-    const result = await Promise.race([
-      lhPromise,
-      new Promise<never>((_, rej) =>
-        setTimeout(() => rej(new Error('LIGHTHOUSE_TIMEOUT')), opts.timeoutMs ?? 120_000)),
-    ]);
-    if (!result) throw new Error('Lighthouse returned null');
-    if (result.lhr.runtimeError) throw new Error(`runtimeError: ${result.lhr.runtimeError.code}`);
-
-    if (browser) await browser.disconnect();
-    return result.lhr;
-  } finally {
-    await chrome.kill();
-  }
 }
 ```
 
 ### 10.3 Recipe: 5 lần + median cho một (route, formFactor)
 
 ```ts
-import { computeMedianRun } from 'lighthouse/core/lib/median-run.js';
+import { computeMedianRun } from "lighthouse/core/lib/median-run.js";
 
-export async function runRoute(opts: RunOnceOpts, n: number, onRun: (i: number, ok: boolean) => void) {
-  const lhrs = []; const errors = [];
-  for (let i = 0; i < n; i++) {
-    try { lhrs.push(await runOnce(opts)); onRun(i, true); }
-    catch (e: any) { errors.push({ runIndex: i, message: e.message }); onRun(i, false); }
-  }
-  if (lhrs.length < Math.ceil(n / 2)) {
-    return { status: 'failed' as const, lhrs, median: null, errors };
-  }
-  const median = computeMedianRun(lhrs);
-  return {
-    status: (lhrs.length === n ? 'ok' : 'degraded') as 'ok' | 'degraded',
-    lhrs, median, errors,
-  };
+export async function runRoute(
+    opts: RunOnceOpts,
+    n: number,
+    onRun: (i: number, ok: boolean) => void,
+) {
+    const lhrs = [];
+    const errors = [];
+    for (let i = 0; i < n; i++) {
+        try {
+            lhrs.push(await runOnce(opts));
+            onRun(i, true);
+        } catch (e: any) {
+            errors.push({ runIndex: i, message: e.message });
+            onRun(i, false);
+        }
+    }
+    if (lhrs.length < Math.ceil(n / 2)) {
+        return { status: "failed" as const, lhrs, median: null, errors };
+    }
+    const median = computeMedianRun(lhrs);
+    return {
+        status: (lhrs.length === n ? "ok" : "degraded") as "ok" | "degraded",
+        lhrs,
+        median,
+        errors,
+    };
 }
 ```
 
@@ -701,50 +799,134 @@ export async function runRoute(opts: RunOnceOpts, n: number, onRun: (i: number, 
 
 ```ts
 export const THROTTLING_PRESETS = {
-  'slow-4g': { rttMs: 150, throughputKbps: 1638.4, requestLatencyMs: 562.5,
-               downloadThroughputKbps: 1474.56, uploadThroughputKbps: 675, cpuSlowdownMultiplier: 4 },
-  'fast-3g': { rttMs: 80,  throughputKbps: 1638.4, requestLatencyMs: 150,
-               downloadThroughputKbps: 1638.4, uploadThroughputKbps: 750, cpuSlowdownMultiplier: 2 },
-  'slow-3g': { rttMs: 300, throughputKbps: 700,   requestLatencyMs: 300,
-               downloadThroughputKbps: 500,    uploadThroughputKbps: 300, cpuSlowdownMultiplier: 8 },
+    "slow-4g": {
+        rttMs: 150,
+        throughputKbps: 1638.4,
+        requestLatencyMs: 562.5,
+        downloadThroughputKbps: 1474.56,
+        uploadThroughputKbps: 675,
+        cpuSlowdownMultiplier: 4,
+    },
+    "fast-3g": {
+        rttMs: 80,
+        throughputKbps: 1638.4,
+        requestLatencyMs: 150,
+        downloadThroughputKbps: 1638.4,
+        uploadThroughputKbps: 750,
+        cpuSlowdownMultiplier: 2,
+    },
+    "slow-3g": {
+        rttMs: 300,
+        throughputKbps: 700,
+        requestLatencyMs: 300,
+        downloadThroughputKbps: 500,
+        uploadThroughputKbps: 300,
+        cpuSlowdownMultiplier: 8,
+    },
 };
 ```
 
 ### 10.5 Recipe: conditional formatting trong ExcelJS
 
 ```ts
-const SCORE_COLORS = { good: 'FF0CCE6B', avg: 'FFFFA400', poor: 'FFFF4E40' };
+const SCORE_COLORS = { good: "FF0CCE6B", avg: "FFFFA400", poor: "FFFF4E40" };
 
 export function applyScoreCF(ws: ExcelJS.Worksheet, range: string) {
-  ws.addConditionalFormatting({
-    ref: range,
-    rules: [
-      { type: 'cellIs', operator: 'lessThan', formulae: [50], priority: 1,
-        style: { fill: { type: 'pattern', pattern: 'solid', bgColor: { argb: SCORE_COLORS.poor } },
-                 font: { color: { argb: 'FFFFFFFF' }, bold: true } } },
-      { type: 'cellIs', operator: 'between', formulae: [50, 89], priority: 2,
-        style: { fill: { type: 'pattern', pattern: 'solid', bgColor: { argb: SCORE_COLORS.avg } },
-                 font: { color: { argb: 'FF000000' } } } },
-      { type: 'cellIs', operator: 'greaterThanOrEqual', formulae: [90], priority: 3,
-        style: { fill: { type: 'pattern', pattern: 'solid', bgColor: { argb: SCORE_COLORS.good } },
-                 font: { color: { argb: 'FFFFFFFF' }, bold: true } } },
-    ],
-  });
+    ws.addConditionalFormatting({
+        ref: range,
+        rules: [
+            {
+                type: "cellIs",
+                operator: "lessThan",
+                formulae: [50],
+                priority: 1,
+                style: {
+                    fill: {
+                        type: "pattern",
+                        pattern: "solid",
+                        bgColor: { argb: SCORE_COLORS.poor },
+                    },
+                    font: { color: { argb: "FFFFFFFF" }, bold: true },
+                },
+            },
+            {
+                type: "cellIs",
+                operator: "between",
+                formulae: [50, 89],
+                priority: 2,
+                style: {
+                    fill: {
+                        type: "pattern",
+                        pattern: "solid",
+                        bgColor: { argb: SCORE_COLORS.avg },
+                    },
+                    font: { color: { argb: "FF000000" } },
+                },
+            },
+            {
+                type: "cellIs",
+                operator: "greaterThanOrEqual",
+                formulae: [90],
+                priority: 3,
+                style: {
+                    fill: {
+                        type: "pattern",
+                        pattern: "solid",
+                        bgColor: { argb: SCORE_COLORS.good },
+                    },
+                    font: { color: { argb: "FFFFFFFF" }, bold: true },
+                },
+            },
+        ],
+    });
 }
 
 export function applyLcpCF(ws: ExcelJS.Worksheet, range: string) {
-  ws.addConditionalFormatting({
-    ref: range,
-    rules: [
-      { type: 'cellIs', operator: 'lessThanOrEqual', formulae: [2500], priority: 1,
-        style: { fill: { type: 'pattern', pattern: 'solid', bgColor: { argb: SCORE_COLORS.good } } } },
-      { type: 'cellIs', operator: 'lessThanOrEqual', formulae: [4000], priority: 2,
-        style: { fill: { type: 'pattern', pattern: 'solid', bgColor: { argb: SCORE_COLORS.avg } } } },
-      { type: 'cellIs', operator: 'greaterThan', formulae: [4000], priority: 3,
-        style: { fill: { type: 'pattern', pattern: 'solid', bgColor: { argb: SCORE_COLORS.poor } },
-                 font: { color: { argb: 'FFFFFFFF' } } } },
-    ],
-  });
+    ws.addConditionalFormatting({
+        ref: range,
+        rules: [
+            {
+                type: "cellIs",
+                operator: "lessThanOrEqual",
+                formulae: [2500],
+                priority: 1,
+                style: {
+                    fill: {
+                        type: "pattern",
+                        pattern: "solid",
+                        bgColor: { argb: SCORE_COLORS.good },
+                    },
+                },
+            },
+            {
+                type: "cellIs",
+                operator: "lessThanOrEqual",
+                formulae: [4000],
+                priority: 2,
+                style: {
+                    fill: {
+                        type: "pattern",
+                        pattern: "solid",
+                        bgColor: { argb: SCORE_COLORS.avg },
+                    },
+                },
+            },
+            {
+                type: "cellIs",
+                operator: "greaterThan",
+                formulae: [4000],
+                priority: 3,
+                style: {
+                    fill: {
+                        type: "pattern",
+                        pattern: "solid",
+                        bgColor: { argb: SCORE_COLORS.poor },
+                    },
+                    font: { color: { argb: "FFFFFFFF" } },
+                },
+            },
+        ],
+    });
 }
 // Tạo hàm tương tự cho CLS (0.1/0.25), TBT (200/600), FCP (1800/3000),
 // Speed Index (3400/5800), TTI (3800/7300).
@@ -753,34 +935,47 @@ export function applyLcpCF(ws: ExcelJS.Worksheet, range: string) {
 ### 10.6 Recipe: SSE endpoint với BullMQ QueueEvents
 
 ```ts
-import { QueueEvents } from 'bullmq';
+import { QueueEvents } from "bullmq";
 
-fastify.get('/jobs/:id/events', async (req, reply) => {
-  const { id } = req.params as { id: string };
-  reply.raw.setHeader('Content-Type', 'text/event-stream');
-  reply.raw.setHeader('Cache-Control', 'no-cache, no-transform');
-  reply.raw.setHeader('Connection', 'keep-alive');
-  reply.raw.setHeader('X-Accel-Buffering', 'no');  // QUAN TRỌNG cho NGINX
+fastify.get("/jobs/:id/events", async (req, reply) => {
+    const { id } = req.params as { id: string };
+    reply.raw.setHeader("Content-Type", "text/event-stream");
+    reply.raw.setHeader("Cache-Control", "no-cache, no-transform");
+    reply.raw.setHeader("Connection", "keep-alive");
+    reply.raw.setHeader("X-Accel-Buffering", "no"); // QUAN TRỌNG cho NGINX
 
-  const send = (event: string, data: any) =>
-    reply.raw.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+    const send = (event: string, data: any) =>
+        reply.raw.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
 
-  const qEvents = new QueueEvents('lh-audits', { connection });
-  const heartbeat = setInterval(() => reply.raw.write(`: ping\n\n`), 15000);
+    const qEvents = new QueueEvents("lh-audits", { connection });
+    const heartbeat = setInterval(() => reply.raw.write(`: ping\n\n`), 15000);
 
-  const onProgress = ({ jobId, data }: any) => { if (jobId === id) send('progress', data); };
-  const onCompleted = ({ jobId, returnvalue }: any) => {
-    if (jobId === id) { send('done', returnvalue); cleanup(); reply.raw.end(); }
-  };
-  const onFailed = ({ jobId, failedReason }: any) => {
-    if (jobId === id) { send('failed', { error: failedReason }); cleanup(); reply.raw.end(); }
-  };
-  qEvents.on('progress', onProgress);
-  qEvents.on('completed', onCompleted);
-  qEvents.on('failed', onFailed);
+    const onProgress = ({ jobId, data }: any) => {
+        if (jobId === id) send("progress", data);
+    };
+    const onCompleted = ({ jobId, returnvalue }: any) => {
+        if (jobId === id) {
+            send("done", returnvalue);
+            cleanup();
+            reply.raw.end();
+        }
+    };
+    const onFailed = ({ jobId, failedReason }: any) => {
+        if (jobId === id) {
+            send("failed", { error: failedReason });
+            cleanup();
+            reply.raw.end();
+        }
+    };
+    qEvents.on("progress", onProgress);
+    qEvents.on("completed", onCompleted);
+    qEvents.on("failed", onFailed);
 
-  function cleanup() { clearInterval(heartbeat); qEvents.close().catch(() => {}); }
-  req.raw.on('close', cleanup);
+    function cleanup() {
+        clearInterval(heartbeat);
+        qEvents.close().catch(() => {});
+    }
+    req.raw.on("close", cleanup);
 });
 ```
 

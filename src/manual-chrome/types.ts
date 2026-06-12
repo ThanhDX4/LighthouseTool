@@ -11,8 +11,8 @@ export type ManualChromeErrorCode =
 
 export interface ManualChromeSessionRecord {
   profileSessionId: string;
-  ownerNonce: string;
-  serverInstanceId: string;
+  ownerNonce?: string | undefined;
+  serverInstanceId?: string | undefined;
   port: number;
   profileDir: string;
   processId: number;
@@ -34,7 +34,7 @@ export interface ManualChromeScanTab {
 export interface ManualChromeScanSnapshot {
   scanId: string;
   profileSessionId: string;
-  serverInstanceId: string;
+  serverInstanceId?: string | undefined;
   expiresAt: string;
   tabs: ManualChromeScanTab[];
 }

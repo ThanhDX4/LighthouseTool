@@ -62,8 +62,8 @@ export interface ManualCompareWarning {
 export interface ManualChromeTargetDescriptor {
   targetId: string;
   profileSessionId: string;
-  ownerNonce: string;
-  serverInstanceId: string;
+  ownerNonce?: string | undefined;
+  serverInstanceId?: string | undefined;
   auditUrl: SecretValue;
   displayUrl: string;
   route: string;

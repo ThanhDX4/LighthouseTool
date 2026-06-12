@@ -13,12 +13,14 @@ export interface RuntimeConfig {
   workerConcurrency: number;
   allowInsecureDevSecrets: boolean;
   allowedHosts: string[];
+  autoOpenBrowser: boolean;
   manualChrome: ManualChromeRuntimeConfig;
 }
 
 export interface ManualChromeRuntimeConfig {
   enabled: boolean;
   autoOpen: boolean;
+  mode: "auto-launch" | "connect-only";
   port: number;
   profileDir: string;
   startupTimeoutMs: number;
@@ -43,9 +45,10 @@ export function loadRuntimeConfig(env: NodeJS.ProcessEnv = process.env): Runtime
   const manualChrome = {
     enabled: env.MANUAL_CHROME_ENABLED === "true",
     autoOpen: env.MANUAL_CHROME_AUTO_OPEN === "true" || true,
+    mode: (env.MANUAL_CHROME_MODE?.trim() || "auto-launch") as "auto-launch" | "connect-only",
     port: parseIntegerSetting(env, "MANUAL_CHROME_PORT", 9222, 1024, 65_535),
     profileDir: env.MANUAL_CHROME_PROFILE_DIR?.trim() || ".lh-audit/chrome-profile",
-    startupTimeoutMs: parseIntegerSetting(env, "MANUAL_CHROME_STARTUP_TIMEOUT_MS", 15_000, 1_000, 120_000),
+    startupTimeoutMs: parseIntegerSetting(env, "MANUAL_CHROME_STARTUP_TIMEOUT_MS", 60_000, 1_000, 120_000),
     maxTabs: parseIntegerSetting(env, "MANUAL_CHROME_MAX_TABS", 20, 1, 100),
     maxEvidenceFiles: parseIntegerSetting(env, "MANUAL_CHROME_MAX_EVIDENCE_FILES", 100, 1, 1_000),
     maxEvidenceBytes: parseIntegerSetting(
@@ -70,6 +73,7 @@ export function loadRuntimeConfig(env: NodeJS.ProcessEnv = process.env): Runtime
     workerConcurrency,
     allowInsecureDevSecrets,
     allowedHosts,
+    autoOpenBrowser: env.SERVER_AUTO_OPEN_BROWSER === "true",
     manualChrome
   };
 }

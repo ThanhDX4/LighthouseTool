@@ -93,11 +93,11 @@ export function App() {
     const [formLoginEnabled, setFormLoginEnabled] = useState(false);
     const [loginUrl, setLoginUrl] = useState("");
     const [usernameSelector, setUsernameSelector] = useState(
-        'input[name="email"]',
+        'input[name="LOGIN_EMAIL"]',
     );
     const [username, setUsername] = useState("");
     const [passwordSelector, setPasswordSelector] = useState(
-        'input[name="password"]',
+        'input[name="PASSWORD"]',
     );
     const [password, setPassword] = useState("");
     const [submitSelector, setSubmitSelector] = useState(
@@ -566,9 +566,7 @@ export function App() {
                                         checked={compareEnabled}
                                         disabled={running || submitting}
                                         onChange={() =>
-                                            setCompareEnabled(
-                                                (value) => !value,
-                                            )
+                                            setCompareEnabled((value) => !value)
                                         }
                                     />
                                     {compareEnabled ? (
@@ -611,12 +609,7 @@ export function App() {
 
                                 <div className="grid gap-4 sm:grid-cols-[1fr_220px]">
                                     <div>
-                                        <p
-                                            className={cn(
-                                                eyebrowClass,
-                                                "mb-3",
-                                            )}
-                                        >
+                                        <p className={cn(eyebrowClass, "mb-3")}>
                                             Form factor
                                         </p>
                                         <div className="flex flex-wrap gap-1.5">
@@ -1076,9 +1069,7 @@ export function App() {
                                         strokeWidth={1.8}
                                         aria-hidden="true"
                                     />
-                                    {submitting
-                                        ? "Submitting…"
-                                        : "Start audit"}
+                                    {submitting ? "Submitting…" : "Start audit"}
                                 </button>
                             </div>
                         </form>

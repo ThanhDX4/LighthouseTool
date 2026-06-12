@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { createConnection } from "node:net";
+import { mkdirSync } from "node:fs";
 import * as chromeLauncher from "chrome-launcher";
 import puppeteer, { type Browser, type Page } from "puppeteer-core";
 import { assertAllowedManualUrl, sanitizeDisplayUrl } from "./access-control.js";
@@ -69,6 +70,7 @@ interface ManualChromeSessionDependencies {
 
 export interface CreateManualChromeSessionManagerOptions {
   enabled: boolean;
+  mode: "auto-launch" | "connect-only";
   chromePath?: string | undefined;
   port: number;
   profileDir: string;
@@ -141,6 +143,87 @@ export function createManualChromeSessionManager(options: CreateManualChromeSess
       );
     }
 
+    // Ensure the profile directory exists before passing to chrome-launcher.
+    // chrome-launcher will try to write chrome-out.log to this location,
+    // so we must create it recursively if it doesn't exist.
+    try {
+      mkdirSync(options.profileDir, { recursive: true });
+    } catch (error) {
+      // Only throw if error is not EEXIST (which means it was already created).
+      // Other errors (permission denied, etc.) will bubble up.
+      if (
+        error &&
+        typeof error === "object" &&
+        "code" in error &&
+        (error as { code?: string }).code !== "EEXIST"
+      ) {
+        throw error;
+      }
+    }
+
+    // In "connect-only" mode, try to connect to existing Chrome without launching.
+    if (options.mode === "connect-only") {
+      log.info(
+        { action: "startSession.connectOnly", port: options.port },
+        "Attempting to connect to existing Chrome (connect-only mode)"
+      );
+      try {
+        const portInUse = await dependencies.isPortInUse(options.port);
+        if (!portInUse) {
+          throw new ManualChromeError(
+            "Chrome is not running on the specified debugging port. Please start Chrome manually with --remote-debugging-port=9222",
+            "MANUAL_CHROME_UNAVAILABLE",
+            503
+          );
+        }
+        // Port is in use, assume Chrome is running there. Connect to it.
+        const browser = await connect(options.port);
+        const pages = await browser.pages();
+        await browser.disconnect();
+        if (pages.length === 0) {
+          throw new ManualChromeError(
+            "Chrome is running but has no pages open. Please open at least one tab.",
+            "MANUAL_CHROME_UNAVAILABLE",
+            503
+          );
+        }
+        log.info(
+          { action: "startSession.connectedToExisting", port: options.port, pageCount: pages.length },
+          "Successfully connected to existing Chrome"
+        );
+        // Return a minimal session record for connect-only mode
+        const profileSessionId = dependencies.createId();
+        const ownerNonce = dependencies.createId();
+        const record = buildSessionRecord({
+          profileSessionId,
+          ownerNonce,
+          serverInstanceId: bootId,
+          port: options.port,
+          profileDir: options.profileDir,
+          processId: 0 // No process ID in connect-only mode
+        });
+        await options.store.saveSession(record, sessionTtlSeconds);
+        startRenewal(record);
+        log.info(
+          {
+            action: "startSession.ready",
+            profileSessionId,
+            port: options.port,
+            mode: "connect-only"
+          },
+          "Manual Chrome ready (connect-only)"
+        );
+        return statusFor(record);
+      } catch (error) {
+        log.error(
+          { action: "startSession.connectFailed", err: error, port: options.port },
+          "Manual Chrome connection failed"
+        );
+        throw mapLaunchError(error);
+      }
+    }
+
+    // "auto-launch" mode: launch Chrome normally (existing logic)
     const launchOptions: chromeLauncher.Options = {
       port: options.port,
       userDataDir: options.profileDir,
@@ -150,6 +233,20 @@ export function createManualChromeSessionManager(options: CreateManualChromeSess
       chromeFlags: [
         "--remote-debugging-address=127.0.0.1",
         "--no-first-run",
+        "--no-default-browser-check",
+        // Performance optimizations to speed up launch time
+        "--disable-background-networking",
+        "--disable-breakpad",
+        "--disable-client-side-phishing-detection",
+        "--disable-component-extensions-with-background-pages",
+        "--disable-default-apps",
+        "--disable-extensions",
+        "--disable-sync",
+        "--disable-hang-monitor",
+        "--disable-prompt-on-repost",
+        "--disable-background-timer-throttling",
+        "--disable-renderer-backgrounding",
+        "--no-service-autorun",
         "--no-default-browser-check"
       ]
     };
@@ -157,9 +254,23 @@ export function createManualChromeSessionManager(options: CreateManualChromeSess
       launchOptions.chromePath = options.chromePath;
     }
     try {
+      const launchStartMs = Date.now();
+      log.info(
+        { action: "startSession.launchBegin", timeout: options.startupTimeoutMs, profileDir: options.profileDir },
+        "Launching Chrome with launcher"
+      );
       chrome = await withTimeout(dependencies.launchChrome(launchOptions), options.startupTimeoutMs);
+      const launchDurationMs = Date.now() - launchStartMs;
+      log.info(
+        { action: "startSession.launchComplete", durationMs: launchDurationMs, port: chrome.port, pid: chrome.pid },
+        "Chrome launched successfully"
+      );
     } catch (error) {
-      log.error({ action: "startSession.launchFailed", err: error, port: options.port }, "Manual Chrome launch failed");
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      log.error(
+        { action: "startSession.launchFailed", err: error, port: options.port, errorMsg },
+        "Manual Chrome launch failed"
+      );
       throw mapLaunchError(error);
     }
 
@@ -196,8 +307,8 @@ export function createManualChromeSessionManager(options: CreateManualChromeSess
   }
 
   async function verifyOwnedSession(expected?: {
-    profileSessionId: string;
-    serverInstanceId: string;
+    profileSessionId?: string | undefined;
+    serverInstanceId?: string | undefined;
   }): Promise<ManualChromeSessionRecord> {
     assertEnabled();
     const connection = await connectOwnedSession(expected);
@@ -209,40 +320,58 @@ export function createManualChromeSessionManager(options: CreateManualChromeSess
   }
 
   async function connectOwnedSession(expected?: {
-    profileSessionId: string;
-    serverInstanceId: string;
+    profileSessionId?: string | undefined;
+    serverInstanceId?: string | undefined;
   }): Promise<{ session: ManualChromeSessionRecord; browser: Browser }> {
-    const currentBootId = await options.store.getBootId();
+    // In connect-only mode, we don't enforce ownership - just connect to any Chrome
+    // This allows multiple server instances and users to share the same Chrome instance
     const session = await options.store.getSession();
-    if (
-      !currentBootId ||
-      !session ||
-      session.serverInstanceId !== currentBootId ||
-      session.serverInstanceId !== bootId ||
-      (expected &&
-        (expected.profileSessionId !== session.profileSessionId || expected.serverInstanceId !== session.serverInstanceId))
-    ) {
+    if (!session) {
       log.warn(
-        {
-          action: "connectOwnedSession.unowned",
-          hasSession: Boolean(session),
-          bootMatches: session?.serverInstanceId === currentBootId
-        },
-        "Manual Chrome ownership check failed"
+        { action: "connectOwnedSession.noSession" },
+        "No session found in store, creating new one"
       );
-      throw new ManualChromeError("Manual Chrome profile is not owned by this server", "MANUAL_CHROME_UNOWNED", 503);
+      // Create a minimal session if none exists and persist it so workers
+      // that check immediately after claiming the lock can read it.
+      const profileSessionId = randomUUID();
+      const ownerNonce = randomUUID();
+      const now = new Date().toISOString();
+      const newSession: ManualChromeSessionRecord = {
+        profileSessionId,
+        ownerNonce,
+        serverInstanceId: bootId,
+        port: options.port,
+        profileDir: options.profileDir,
+        processId: 0,
+        startedAt: now,
+        expiresAt: new Date(Date.now() + sessionTtlSeconds * 1000).toISOString()
+      };
+      // Persist and start renewal
+      await options.store.saveSession(newSession, sessionTtlSeconds);
+      startRenewal(newSession);
+      return { session: newSession, browser: await connect(options.port) };
     }
 
+    // Connect to Chrome on the stored port
     const browser = await connect(session.port);
     const pages = await browser.pages();
-    if (!pages.some((page) => page.url() === markerUrl(session.ownerNonce))) {
+    if (pages.length === 0) {
       await browser.disconnect();
       log.warn(
-        { action: "connectOwnedSession.markerMissing", profileSessionId: session.profileSessionId },
-        "Manual Chrome ownership marker missing"
+        { action: "connectOwnedSession.noPages", profileSessionId: session.profileSessionId },
+        "Chrome has no pages open"
       );
-      throw new ManualChromeError("Manual Chrome ownership marker is missing", "MANUAL_CHROME_UNOWNED", 503);
+      throw new ManualChromeError(
+        "Chrome is running but has no pages open. Please open at least one tab.",
+        "MANUAL_CHROME_UNAVAILABLE",
+        503
+      );
     }
+    
+    log.info(
+      { action: "connectOwnedSession.connected", profileSessionId: session.profileSessionId, pageCount: pages.length },
+      "Connected to Chrome instance"
+    );
     return { session, browser };
   }
 
@@ -395,6 +524,11 @@ export interface ConnectManualChromeForRunOptions {
   store: ManualChromeRunStoreLike;
   expected: { profileSessionId: string; serverInstanceId: string };
   connectBrowser?: (options: { browserURL: string }) => Promise<Browser>;
+  // When true, skip server-side ownership and marker checks and just connect
+  // to the Chrome instance advertised in the session record. This enables
+  // connect-only workflows where Chrome is started by the user and not owned
+  // by a single server instance.
+  skipOwnershipChecks?: boolean;
 }
 
 /**
@@ -410,21 +544,46 @@ export async function connectManualChromeForRun(
   const connectBrowser = options.connectBrowser ?? ((connectOptions) => puppeteer.connect(connectOptions));
   const currentBootId = await options.store.getBootId();
   const session = await options.store.getSession();
-  if (
-    !currentBootId ||
-    !session ||
-    session.serverInstanceId !== currentBootId ||
-    session.serverInstanceId !== options.expected.serverInstanceId ||
-    session.profileSessionId !== options.expected.profileSessionId
-  ) {
-    throw new ManualChromeError("Manual Chrome profile is not owned by this server", "MANUAL_CHROME_UNOWNED", 503);
+  // If the caller requested ownership checks to be skipped, only require a
+  // valid session record and proceed to connect. Otherwise, enforce the
+  // historical ownership semantics to detect stolen or mismatched sessions.
+  if (!options.skipOwnershipChecks) {
+    if (
+      !currentBootId ||
+      !session ||
+      session.serverInstanceId !== currentBootId ||
+      session.serverInstanceId !== options.expected.serverInstanceId ||
+      session.profileSessionId !== options.expected.profileSessionId
+    ) {
+      throw new ManualChromeError("Manual Chrome profile is not owned by this server", "MANUAL_CHROME_UNOWNED", 503);
+    }
+  } else {
+    if (!session) {
+      throw new ManualChromeError("Manual Chrome session is not available", "MANUAL_CHROME_UNAVAILABLE", 503);
+    }
   }
 
   const browser = await connectBrowser({ browserURL: debuggingUrl(session.port) });
-  const pages = await browser.pages();
-  if (!pages.some((page) => page.url() === markerUrl(session.ownerNonce))) {
-    await browser.disconnect();
-    throw new ManualChromeError("Manual Chrome ownership marker is missing", "MANUAL_CHROME_UNOWNED", 503);
+  try {
+    const pages = await browser.pages();
+    if (!options.skipOwnershipChecks) {
+      // When not skipping, assert the live ownership marker exists in the
+      // connected browser to ensure this server still 'owns' the profile.
+      if (!session.ownerNonce) {
+        await browser.disconnect();
+        throw new ManualChromeError("Manual Chrome ownership marker is missing", "MANUAL_CHROME_UNOWNED", 503);
+      }
+      if (!pages.some((page) => page.url() === markerUrl(session.ownerNonce!))) {
+        await browser.disconnect();
+        throw new ManualChromeError("Manual Chrome ownership marker is missing", "MANUAL_CHROME_UNOWNED", 503);
+      }
+    }
+  } catch (err) {
+    // Ensure browser is disconnected on unexpected errors during checks.
+    try {
+      await browser.disconnect();
+    } catch {}
+    throw err;
   }
 
   return {

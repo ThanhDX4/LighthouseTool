@@ -135,11 +135,33 @@ export async function performFormLogin(
   }
   try {
     if (Object.keys(extraHeaders).length > 0) await page.setExtraHTTPHeaders(extraHeaders);
-    const loginResponse = await page.goto(formLogin.loginUrl, {
-      waitUntil: navigationReadyState,
-      timeout: formLogin.postLogin.timeoutMs
-    });
-    assertSuccessfulNavigation(loginResponse, "Login page");
+    // Retry transient server errors (5xx) when opening the login page. This
+    // helps when an upstream service or load balancer briefly returns 502/503.
+    const maxLoginAttempts = 3;
+    let loginResponse: unknown | undefined;
+    for (let attempt = 1; attempt <= maxLoginAttempts; attempt += 1) {
+      loginResponse = await page.goto(formLogin.loginUrl, {
+        waitUntil: navigationReadyState,
+        timeout: formLogin.postLogin.timeoutMs
+      });
+
+      // If the response has a numeric status and it's a 5xx, consider it
+      // transient and retry (with a small backoff) before failing fatally.
+      const status =
+        loginResponse && typeof (loginResponse as { status?: unknown }).status === "function"
+          ? (loginResponse as { status: () => unknown }).status()
+          : undefined;
+
+      if (typeof status === "number" && status >= 500 && attempt < maxLoginAttempts) {
+        // small exponential backoff
+        await waitForDelay(2500 * attempt);
+        continue;
+      }
+
+      // Either success or non-retriable status; validate and proceed.
+      assertSuccessfulNavigation(loginResponse, "Login page");
+      break;
+    }
     await page.waitForSelector(formLogin.usernameSelector, { timeout: formLogin.postLogin.timeoutMs });
     await page.type(formLogin.usernameSelector, formLogin.username);
     await page.waitForSelector(formLogin.passwordSelector, { timeout: formLogin.postLogin.timeoutMs });

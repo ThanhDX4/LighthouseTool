@@ -8,9 +8,10 @@ describe("manual Chrome runtime config", () => {
     expect(config.manualChrome).toEqual({
       enabled: false,
       autoOpen: true,
+      mode: "auto-launch",
       port: 9222,
       profileDir: ".lh-audit/chrome-profile",
-      startupTimeoutMs: 15_000,
+      startupTimeoutMs: 60_000,
       maxTabs: 20,
       maxEvidenceFiles: 100,
       maxEvidenceBytes: 50 * 1024 * 1024
@@ -34,6 +35,7 @@ describe("manual Chrome runtime config", () => {
     expect(config.manualChrome).toEqual({
       enabled: true,
       autoOpen: true,
+      mode: "auto-launch",
       port: 9333,
       profileDir: "/tmp/perf-profile",
       startupTimeoutMs: 20_000,

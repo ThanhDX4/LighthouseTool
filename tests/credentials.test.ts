@@ -48,8 +48,8 @@ describe("credential encryption", () => {
       basicAuth: { enabled: false },
       formLogin: {
         enabled: false,
-        usernameSelector: 'input[name="email"]',
-        passwordSelector: 'input[name="password"]',
+        usernameSelector: 'input[name="LOGIN_EMAIL"]',
+        passwordSelector: 'input[name="PASSWORD"]',
         submitSelector: 'button[type="submit"]',
         postLogin: { mode: "navigation", timeoutMs: 30_000 }
       },

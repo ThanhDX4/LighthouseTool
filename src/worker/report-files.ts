@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { createReadStream, promises as fs } from "node:fs";
-import { join } from "node:path";
+import path from "node:path";
 import type ExcelJS from "exceljs";
 import { redactAuditConfig } from "../config/safe-audit-config.js";
 import { buildLighthouseHtmlReport } from "../report/lighthouse-html.js";
@@ -56,9 +56,9 @@ export async function writeReportFiles(dataDir: string, report: AuditReport, wor
   indexHtmlReport?: EvidenceIndexHtmlReportFile | undefined;
   evidenceDiagnostics: EvidenceDiagnostic[];
 }> {
-  const reportDir = join(dataDir, "jobs", report.jobId);
+  const reportDir = path.join(dataDir, "jobs", report.jobId);
   await fs.mkdir(reportDir, { recursive: true });
-  const reportPath = join(reportDir, "report.xlsx");
+  const reportPath = path.join(reportDir, "report.xlsx");
   await workbook.xlsx.writeFile(reportPath);
   const sha256 = await sha256File(reportPath);
   const evidenceMode = options.evidenceMode ?? (report.mode === "manual-tabs" ? "none" : "html");
@@ -69,9 +69,9 @@ export async function writeReportFiles(dataDir: string, report: AuditReport, wor
     options.maxEvidenceBytes
   );
   const indexHtmlReport = await writeEvidenceIndexHtmlReport(reportDir, report, htmlReports);
-  await fs.writeFile(join(reportDir, "report.xlsx.sha256"), `${sha256}\n`, "utf8");
+  await fs.writeFile(path.join(reportDir, "report.xlsx.sha256"), `${sha256}\n`, "utf8");
   await fs.writeFile(
-    join(reportDir, "meta.json"),
+  path.join(reportDir, "meta.json"),
     JSON.stringify(
       {
         jobId: report.jobId,
@@ -101,7 +101,7 @@ export async function writeReportFiles(dataDir: string, report: AuditReport, wor
 }
 
 export async function cleanupOldReports(dataDir: string): Promise<void> {
-  const root = join(dataDir, "jobs");
+  const root = path.join(dataDir, "jobs");
   const cutoff = Date.now() - 24 * 60 * 60 * 1000;
   try {
     const entries = await fs.readdir(root, { withFileTypes: true });
@@ -109,7 +109,7 @@ export async function cleanupOldReports(dataDir: string): Promise<void> {
       entries
         .filter((entry) => entry.isDirectory())
         .map(async (entry) => {
-          const dir = join(root, entry.name);
+          const dir = path.join(root, entry.name);
           const stat = await fs.stat(dir);
           if (stat.mtimeMs < cutoff) await fs.rm(dir, { recursive: true, force: true });
         })
@@ -137,7 +137,7 @@ async function writeLighthouseHtmlReports(
 ): Promise<{ htmlReports: LighthouseHtmlReportFile[]; evidenceDiagnostics: EvidenceDiagnostic[] }> {
   if (runs.length === 0) return { htmlReports: [], evidenceDiagnostics: [] };
 
-  const evidenceDir = join(reportDir, "evidence");
+  const evidenceDir = path.join(reportDir, "evidence");
   await fs.mkdir(evidenceDir, { recursive: true });
 
   const htmlReports: LighthouseHtmlReportFile[] = [];
@@ -145,8 +145,8 @@ async function writeLighthouseHtmlReports(
 
   for (const [index, run] of runs.entries()) {
     const fileName = buildEvidenceFileName(run, index);
-    const relativePath = join("evidence", fileName);
-    const absolutePath = join(reportDir, relativePath);
+  const relativePath = path.posix.join("evidence", fileName);
+  const absolutePath = path.join(reportDir, "evidence", fileName);
     const html = buildLighthouseHtmlReport(run.lhr);
 
     if (typeof maxEvidenceBytes === "number" && Buffer.byteLength(html, "utf8") > maxEvidenceBytes) {
@@ -192,13 +192,13 @@ async function writeEvidenceIndexHtmlReport(
 ): Promise<EvidenceIndexHtmlReportFile | undefined> {
   if (htmlReports.length === 0) return undefined;
 
-  const evidenceDir = join(reportDir, "evidence");
+  const evidenceDir = path.join(reportDir, "evidence");
   await fs.mkdir(evidenceDir, { recursive: true });
   const indexHtmlReport = {
     fileName: "index.html",
-    relativePath: join("evidence", "index.html")
+    relativePath: path.posix.join("evidence", "index.html")
   };
-  await fs.writeFile(join(reportDir, indexHtmlReport.relativePath), buildEvidenceIndexHtml(report, htmlReports), "utf8");
+  await fs.writeFile(path.join(reportDir, "evidence", indexHtmlReport.fileName), buildEvidenceIndexHtml(report, htmlReports), "utf8");
   return indexHtmlReport;
 }
 

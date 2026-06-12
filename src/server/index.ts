@@ -1,5 +1,6 @@
 import { resolve } from "node:path";
 import { existsSync } from "node:fs";
+import { exec } from "node:child_process";
 import { buildApp } from "./app.js";
 import { loadRuntimeConfig } from "../config/env.js";
 import { createRedisConnection } from "../queue/connection.js";
@@ -20,6 +21,7 @@ const manualChromeStore = config.manualChrome.enabled ? createManualChromeStore(
 const manualChrome = config.manualChrome.enabled
   ? createManualChromeSessionManager({
       enabled: true,
+      mode: config.manualChrome.mode,
       chromePath: config.chromePath,
       port: config.manualChrome.port,
       profileDir: config.manualChrome.profileDir,
@@ -79,4 +81,24 @@ if (manualChrome && config.manualChrome.autoOpen) {
   } catch (error) {
     app.log.error({ err: error }, "Manual Chrome auto-open failed");
   }
+}
+
+// Auto-open browser when server starts
+if (config.autoOpenBrowser) {
+  const url = `http://127.0.0.1:${config.port}`;
+  serverLog.info({ action: "autoOpen", url }, "Opening browser");
+  
+  const openCmd = process.platform === "win32"
+    ? `start "" "${url}"`
+    : process.platform === "darwin"
+    ? `open "${url}"`
+    : `xdg-open "${url}"`;
+  
+  exec(openCmd, (error) => {
+    if (error) {
+      serverLog.warn({ action: "autoOpen.failed", error: error.message }, "Failed to auto-open browser");
+    } else {
+      serverLog.info({ action: "autoOpen.success", url }, "Browser opened");
+    }
+  });
 }
