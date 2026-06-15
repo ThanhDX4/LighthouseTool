@@ -225,6 +225,6 @@ function selectSnapshotTabs(
  */
 function buildManualRoute(index: number, url: URL): string {
   const prefix = String(index + 1).padStart(2, "0");
-  return `/manual-tabs/${prefix}-${slugifyPathname(url.pathname)}`;
+  return `/${prefix}-${slugifyPathname(url.pathname)}`;
 }
 

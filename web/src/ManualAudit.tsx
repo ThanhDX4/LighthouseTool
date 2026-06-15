@@ -104,7 +104,8 @@ export function ManualAudit({
     const jobRun = useJobRun(apiBase, null, false);
 
     const compareReady =
-        !compare.enabled || (manualScan ? isManualCompareValid(manualScan.tabs, compare) : false);
+        !compare.enabled ||
+        (manualScan ? isManualCompareValid(manualScan.tabs, compare) : false);
     const submissionValid =
         isManualSubmissionValid({
             scan: manualScan,
@@ -272,7 +273,12 @@ export function ManualAudit({
                 }
             />
 
-            <div className={cn(pageContainerClass, "pt-8 pb-7 sm:pt-10 lg:pt-12")}>
+            <div
+                className={cn(
+                    pageContainerClass,
+                    "pt-8 pb-7 sm:pt-10 lg:pt-12",
+                )}
+            >
                 <PageIntro
                     eyebrow="Manual Chrome tabs"
                     title="Audit authenticated flows from a real session."
@@ -447,7 +453,7 @@ export function ManualAudit({
                                                             "cursor-not-allowed opacity-60",
                                                     )}
                                                 >
-                                                    <span className="relative mt-0.5 inline-flex size-[18px] shrink-0 items-center justify-center">
+                                                    <span className="relative mt-0.5 inline-flex size-4.5 shrink-0 items-center justify-center">
                                                         <input
                                                             type="checkbox"
                                                             checked={checked}
@@ -465,7 +471,7 @@ export function ManualAudit({
                                                         <svg
                                                             aria-hidden
                                                             viewBox="0 0 14 14"
-                                                            className="pointer-events-none relative size-[10px] scale-0 text-white transition duration-150 peer-checked:scale-100"
+                                                            className="pointer-events-none relative size-2.5 scale-0 text-white transition duration-150 peer-checked:scale-100"
                                                             fill="none"
                                                         >
                                                             <path
@@ -487,9 +493,7 @@ export function ManualAudit({
                                                             {tab.hasHiddenUrlParts ? (
                                                                 <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-amber-50 px-1.5 py-px text-[10px] font-medium uppercase tracking-wide text-amber-700">
                                                                     <Lock
-                                                                        size={
-                                                                            9
-                                                                        }
+                                                                        size={9}
                                                                         strokeWidth={
                                                                             2
                                                                         }
@@ -549,10 +553,7 @@ export function ManualAudit({
                             </div>
                         ) : null}
 
-                        <Notice
-                            tone="warning"
-                            icon={<ShieldHint />}
-                        >
+                        <Notice tone="warning" icon={<ShieldHint />}>
                             Lighthouse may reload or navigate the selected tab
                             during measurement. Do not audit URLs containing
                             OTPs, password-reset tokens, or one-time session
@@ -645,7 +646,9 @@ export function ManualAudit({
                         report.
                     </Notice>
 
-                    {submitError ? <ErrorBanner>{submitError}</ErrorBanner> : null}
+                    {submitError ? (
+                        <ErrorBanner>{submitError}</ErrorBanner>
+                    ) : null}
 
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <p className={fieldHintClass}>

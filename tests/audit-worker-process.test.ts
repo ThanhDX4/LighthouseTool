@@ -336,10 +336,10 @@ describe("audit worker manual tabs", () => {
   });
 
   it("records a missing-tab failure and still succeeds via another tab", async () => {
-    const present = manualTarget({ targetId: "t-present", route: "/manual-tabs/01-home" });
+    const present = manualTarget({ targetId: "t-present", route: "/01-home" });
     const missing = manualTarget({
       targetId: "t-missing",
-      route: "/manual-tabs/02-away",
+      route: "/02-away",
       displayUrl: "https://app.example.com/away"
     });
     const { processAuditJob, store, connectBrowser } = await setupManual({
@@ -496,7 +496,7 @@ function manualTarget(overrides: Partial<ManualChromeTargetDescriptor> = {}): Ma
     serverInstanceId: SERVER_INSTANCE_ID,
     auditUrl: RAW_AUDIT_URL,
     displayUrl: "https://app.example.com/secret",
-    route: "/manual-tabs/01-home",
+    route: "/01-home",
     selectedAt: "2026-06-05T00:00:00.000Z",
     ...overrides
   };

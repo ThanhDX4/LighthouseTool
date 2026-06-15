@@ -40,7 +40,7 @@ describe("credential encryption", () => {
       mode: "manual-tabs",
       baseUrl: "https://example.com",
       displayName: "Authenticated checkout",
-      paths: ["/manual-tabs/01-checkout"],
+      paths: ["/01-checkout"],
       formFactors: ["desktop"],
       categories: ["performance"],
       runsPerPage: 1,
@@ -68,7 +68,7 @@ describe("credential encryption", () => {
               serverInstanceId: "instance-123",
               auditUrl: "https://example.com/checkout?otpToken=secret#confirm",
               displayUrl: "https://example.com/checkout",
-              route: "/manual-tabs/01-checkout",
+              route: "/01-checkout",
               selectedAt: "2026-06-11T10:00:00.000Z"
             }
           ]
@@ -98,7 +98,7 @@ describe("credential encryption", () => {
         targets: [
           {
             displayUrl: "https://example.com/checkout",
-            route: "/manual-tabs/01-checkout"
+            route: "/01-checkout"
           }
         ]
       }

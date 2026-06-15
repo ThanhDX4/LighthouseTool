@@ -162,7 +162,7 @@ describe("manual tabs evidence privacy", () => {
       auditConfig: manualAuditConfig,
       evidenceMode: "none",
       lighthouseRuns: [
-        { route: "/manual-tabs/01-dashboard", url: "https://app.example.com/dashboard", formFactor: "desktop", runIndex: 1, lhr: minimalLhr("/dashboard") }
+        { route: "/01-dashboard", url: "https://app.example.com/dashboard", formFactor: "desktop", runIndex: 1, lhr: minimalLhr("/dashboard") }
       ]
     });
 
@@ -182,7 +182,7 @@ describe("manual tabs evidence privacy", () => {
       auditConfig: manualAuditConfig,
       evidenceMode: "html",
       lighthouseRuns: [
-        { route: "/manual-tabs/01-dashboard", url: "https://app.example.com/dashboard", formFactor: "desktop", runIndex: 1, lhr: minimalLhr("/dashboard") }
+        { route: "/01-dashboard", url: "https://app.example.com/dashboard", formFactor: "desktop", runIndex: 1, lhr: minimalLhr("/dashboard") }
       ]
     });
 
@@ -198,14 +198,14 @@ describe("manual tabs evidence privacy", () => {
       evidenceMode: "html",
       maxEvidenceBytes: 10,
       lighthouseRuns: [
-        { route: "/manual-tabs/01-dashboard", url: "https://app.example.com/dashboard", formFactor: "desktop", runIndex: 1, lhr: minimalLhr("/dashboard") }
+        { route: "/01-dashboard", url: "https://app.example.com/dashboard", formFactor: "desktop", runIndex: 1, lhr: minimalLhr("/dashboard") }
       ]
     });
 
     expect(result.htmlReports).toEqual([]);
     expect(result.evidenceDiagnostics).toHaveLength(1);
     expect(result.evidenceDiagnostics[0]).toMatchObject({
-      route: "/manual-tabs/01-dashboard",
+      route: "/01-dashboard",
       formFactor: "desktop",
       runIndex: 1
     });
@@ -261,7 +261,7 @@ const manualAuditConfig = {
   mode: "manual-tabs",
   displayName: "Manual checkout",
   baseUrl: "https://app.example.com",
-  paths: ["/manual-tabs/01-dashboard"],
+  paths: ["/01-dashboard"],
   formFactors: ["desktop"],
   categories: ["performance"],
   runsPerPage: 1,
@@ -289,7 +289,7 @@ const manualAuditConfig = {
           serverInstanceId: "boot-1",
           auditUrl: "https://app.example.com/dashboard?token=secret-query",
           displayUrl: "https://app.example.com/dashboard",
-          route: "/manual-tabs/01-dashboard",
+          route: "/01-dashboard",
           selectedAt: "2026-06-11T00:00:00.000Z"
         }
       ]

@@ -28,7 +28,6 @@ const chromeFlags = [
   "--no-sandbox",
   "--disable-dev-shm-usage",
   "--disable-gpu",
-  `--window-size=${defaultDesktopViewport.width},${defaultDesktopViewport.height}`
 ];
 const http2DisabledChromeFlag = "--disable-http2";
 const navigationReadyState = "domcontentloaded";
@@ -91,13 +90,13 @@ async function runOnceLighthouseWithChromeFlags(options: RunOnceOptions, launchF
     if (options.formFactor === "desktop") {
       flags.screenEmulation = defaultDesktopViewport;
       const desktopConfig = (await import("lighthouse/core/config/desktop-config.js")).default;
-      // lighthouseConfig = {
-      //   ...desktopConfig,
-      //   settings: {
-      //     ...desktopConfig.settings,
-      //     screenEmulation: defaultDesktopViewport
-      //   }
-      // };
+      lighthouseConfig = {
+        ...desktopConfig,
+        settings: {
+          ...desktopConfig.settings,
+          screenEmulation: defaultDesktopViewport
+        }
+      };
     } else {
       flags.throttlingMethod = "simulate";
       flags.throttling = resolveMobileThrottling(options.config);

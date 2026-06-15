@@ -201,9 +201,9 @@ describe("Excel report generation", () => {
       authSummary: "Manual browser authentication (Manual Chrome Tabs)",
       routes: [
         {
-          route: "/manual-tabs/01-dashboard",
+          route: "/01-dashboard",
           url: "https://app.example.com/dashboard",
-          results: report.routes[0]!.results.map((result) => ({ ...result, route: "/manual-tabs/01-dashboard" }))
+          results: report.routes[0]!.results.map((result) => ({ ...result, route: "/01-dashboard" }))
         }
       ]
     };
@@ -225,7 +225,7 @@ describe("Excel report generation", () => {
     expect(keyValues.get("Auth")).toBe("Manual browser authentication (Manual Chrome Tabs)");
 
     const summary = workbook.getWorksheet("Summary");
-    expect(summary?.getCell("A2").value).toBe("/manual-tabs/01-dashboard");
+    expect(summary?.getCell("A2").value).toBe("/01-dashboard");
   });
 
   it("renders degraded 4/5 routes with failed run slots and diagnostics", async () => {

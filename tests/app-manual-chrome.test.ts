@@ -451,7 +451,7 @@ describe("manual Chrome job submission", () => {
 
     expect(response.statusCode).toBe(202);
     const config = decryptedExecution(enqueued[0].data.config);
-    expect(config.targets.map((target: any) => target.route)).toEqual(["/manual-tabs/01-checkout", "/manual-tabs/02-account"]);
+    expect(config.targets.map((target: any) => target.route)).toEqual(["/01-checkout", "/02-account"]);
     const firstTarget = config.targets[0];
     expect(firstTarget).toBeDefined();
     expect(firstTarget?.auditUrl).toBe("https://shop.example.com/checkout?otpToken=super-secret");

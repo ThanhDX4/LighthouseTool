@@ -70,12 +70,12 @@ describe("resolveManualTargets — compare", () => {
     expect(resolved.warnings).toEqual([]);
 
     const byTarget = new Map(resolved.targets.map((t) => [t.targetId, t]));
-    expect(byTarget.get("t-dev1-checkout")?.route).toBe("/manual-tabs/checkout");
+    expect(byTarget.get("t-dev1-checkout")?.route).toBe("/checkout");
     expect(byTarget.get("t-dev1-checkout")?.environment).toEqual({
       name: "Dev 1",
       baseUrl: "https://dev1.example.com"
     });
-    expect(byTarget.get("t-dev3-checkout")?.route).toBe("/manual-tabs/checkout");
+    expect(byTarget.get("t-dev3-checkout")?.route).toBe("/checkout");
     expect(byTarget.get("t-dev3-checkout")?.environment?.name).toBe("Dev 3");
   });
 
@@ -98,8 +98,8 @@ describe("resolveManualTargets — compare", () => {
     expect(resolved.warnings).toContainEqual({
       reason: "UNBALANCED_ROUTE",
       displayUrl: "https://dev1.example.com/promo",
-      detail: "/manual-tabs/promo"
+      detail: "/promo"
     });
-    expect(resolved.targets.some((t) => t.route === "/manual-tabs/promo")).toBe(true);
+    expect(resolved.targets.some((t) => t.route === "/promo")).toBe(true);
   });
 });

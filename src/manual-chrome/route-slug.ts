@@ -5,11 +5,5 @@
  */
 export function slugifyPathname(pathname: string): string {
   const slug = pathname
-    .split("/")
-    .filter(Boolean)
-    .join("-")
-    .toLowerCase()
-    .replace(/[^a-z0-9-]+/g, "-")
-    .replace(/^-+|-+$/g, "");
   return slug || "root";
 }

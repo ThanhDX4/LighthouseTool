@@ -154,5 +154,5 @@ function parseUrl(rawUrl: string): URL | null {
 }
 
 function buildCompareRoute(pathname: string): string {
-  return `/manual-tabs/${slugifyPathname(pathname)}`;
+  return `${slugifyPathname(pathname)}`;
 }

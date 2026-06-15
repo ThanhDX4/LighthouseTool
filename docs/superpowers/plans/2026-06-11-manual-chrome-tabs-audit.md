@@ -15,6 +15,7 @@
 ### Task 1: Add Mode-Aware Config, Runtime Settings, And Encrypted Manual Targets
 
 **Files:**
+
 - Modify: `src/types/config.ts`
 - Modify: `src/config/audit-config.ts`
 - Modify: `src/config/safe-audit-config.ts`
@@ -31,25 +32,27 @@ Add tests that prove:
 ```ts
 expect(parseAuditRequest(staticPayload).mode).toBe("static");
 
-expect(parseAuditRequest({
-  mode: "manual-tabs",
-  displayName: "Authenticated checkout",
-  formFactors: ["desktop"],
-  categories: ["performance"],
-  runsPerPage: 1,
-  throttling: { preset: "slow-4g" },
-  manualChrome: {
-    scanId: "scan_123",
-    targetIds: ["target-1"],
-    cachePolicy: "preserve-profile",
-    evidenceMode: "none"
-  }
-})).toMatchObject({
-  mode: "manual-tabs",
-  manualChrome: {
-    scanId: "scan_123",
-    targetIds: ["target-1"]
-  }
+expect(
+    parseAuditRequest({
+        mode: "manual-tabs",
+        displayName: "Authenticated checkout",
+        formFactors: ["desktop"],
+        categories: ["performance"],
+        runsPerPage: 1,
+        throttling: { preset: "slow-4g" },
+        manualChrome: {
+            scanId: "scan_123",
+            targetIds: ["target-1"],
+            cachePolicy: "preserve-profile",
+            evidenceMode: "none",
+        },
+    }),
+).toMatchObject({
+    mode: "manual-tabs",
+    manualChrome: {
+        scanId: "scan_123",
+        targetIds: ["target-1"],
+    },
 });
 ```
 
@@ -62,11 +65,13 @@ Add a manual queued config fixture whose resolved target contains a raw `auditUr
 ```ts
 const encrypted = encryptJobConfig(config, encryptionKey);
 expect(JSON.stringify(encrypted)).not.toContain("otpToken=secret");
-expect(isEncryptedSecret(encrypted.manualChrome.targets[0]?.auditUrl)).toBe(true);
+expect(isEncryptedSecret(encrypted.manualChrome.targets[0]?.auditUrl)).toBe(
+    true,
+);
 
 const decrypted = decryptJobConfig(encrypted, encryptionKey);
 expect(decrypted.manualChrome.targets[0]?.auditUrl).toBe(
-  "https://example.com/checkout?otpToken=secret"
+    "https://example.com/checkout?otpToken=secret",
 );
 ```
 
@@ -90,20 +95,20 @@ export type ManualEvidenceMode = "none" | "html";
 export type ManualCachePolicy = "preserve-profile";
 
 export interface ManualChromeSelection {
-  scanId: string;
-  targetIds: string[];
-  cachePolicy: ManualCachePolicy;
-  evidenceMode: ManualEvidenceMode;
+    scanId: string;
+    targetIds: string[];
+    cachePolicy: ManualCachePolicy;
+    evidenceMode: ManualEvidenceMode;
 }
 
 export interface ManualChromeTargetDescriptor {
-  targetId: string;
-  profileSessionId: string;
-  ownerNonce: string;
-  serverInstanceId: string;
-  auditUrl: SecretValue;
-  displayUrl: string;
-  selectedAt: string;
+    targetId: string;
+    profileSessionId: string;
+    ownerNonce: string;
+    serverInstanceId: string;
+    auditUrl: SecretValue;
+    displayUrl: string;
+    selectedAt: string;
 }
 ```
 
@@ -178,6 +183,7 @@ git commit -m "feat: add manual tabs audit config"
 ### Task 2: Add Manual Chrome Access Control, URL Sanitization, And Redis State
 
 **Files:**
+
 - Create: `src/manual-chrome/types.ts`
 - Create: `src/manual-chrome/access-control.ts`
 - Create: `src/manual-chrome/redis-store.ts`
@@ -225,34 +231,34 @@ In `src/manual-chrome/types.ts`, define focused records:
 
 ```ts
 export interface ManualChromeSessionRecord {
-  profileSessionId: string;
-  ownerNonce: string;
-  serverInstanceId: string;
-  port: number;
-  profileDir: string;
-  processId: number;
-  startedAt: string;
-  expiresAt: string;
+    profileSessionId: string;
+    ownerNonce: string;
+    serverInstanceId: string;
+    port: number;
+    profileDir: string;
+    processId: number;
+    startedAt: string;
+    expiresAt: string;
 }
 
 export interface ManualChromeScanTab {
-  id: string;
-  title: string;
-  rawUrl: string;
-  displayUrl: string;
-  hasHiddenUrlParts: boolean;
-  valid: boolean;
-  redirectHosts: string[];
-  reason?: string;
+    id: string;
+    title: string;
+    rawUrl: string;
+    displayUrl: string;
+    hasHiddenUrlParts: boolean;
+    valid: boolean;
+    redirectHosts: string[];
+    reason?: string;
 }
 
 export interface ManualChromeLockRecord {
-  jobId: string;
-  profileSessionId: string;
-  ownerToken: string;
-  fencingNumber: number;
-  state: "queued" | "running";
-  expiresAt: string;
+    jobId: string;
+    profileSessionId: string;
+    ownerToken: string;
+    fencingNumber: number;
+    state: "queued" | "running";
+    expiresAt: string;
 }
 ```
 
@@ -305,6 +311,7 @@ git commit -m "feat: add manual chrome state controls"
 ### Task 3: Launch, Verify, And Scan The App-Owned Chrome Profile
 
 **Files:**
+
 - Create: `src/manual-chrome/session-manager.ts`
 - Modify: `src/server/app.ts`
 - Modify: `src/server/index.ts`
@@ -362,10 +369,12 @@ Expected: FAIL because the session service and routes are missing.
 
 ```ts
 export interface ManualChromeService {
-  status(): Promise<ManualChromeStatus>;
-  ensureSession(): Promise<ManualChromeStatus>;
-  scanTabs(): Promise<ManualChromeScanResponse>;
-  verifyOwnedSession(expected: ManualChromeOwnership): Promise<ManualChromeSessionRecord>;
+    status(): Promise<ManualChromeStatus>;
+    ensureSession(): Promise<ManualChromeStatus>;
+    scanTabs(): Promise<ManualChromeScanResponse>;
+    verifyOwnedSession(
+        expected: ManualChromeOwnership,
+    ): Promise<ManualChromeSessionRecord>;
 }
 ```
 
@@ -433,6 +442,7 @@ git commit -m "feat: add manual chrome session scanning"
 ### Task 4: Resolve Manual Job Targets And Acquire The Profile Lock
 
 **Files:**
+
 - Modify: `src/server/app.ts`
 - Modify: `src/manual-chrome/redis-store.ts`
 - Modify: `src/types/config.ts`
@@ -476,7 +486,7 @@ In the manual branch of `POST /jobs`:
 5. resolve selected IDs only from that snapshot,
 6. verify every raw URL and known redirect host,
 7. derive `baseUrl` from the first selected origin,
-8. generate unique labels such as `/manual-tabs/01-checkout`,
+8. generate unique labels such as `/01-checkout`,
 9. create immutable target descriptors,
 10. encrypt the manual execution envelope before enqueueing.
 
@@ -522,6 +532,7 @@ git commit -m "feat: enqueue manual tab audit jobs"
 ### Task 5: Run Lighthouse Against Existing Tabs With Fenced Lock Renewal
 
 **Files:**
+
 - Create: `src/lighthouse/run-manual-tab.ts`
 - Modify: `src/worker/audit-worker.ts`
 - Modify: `src/worker/index.ts`
@@ -591,7 +602,7 @@ Keep `processAuditJob()` as the public entry point and delegate:
 
 ```ts
 if (config.mode === "manual-tabs") {
-  return processManualTabsAuditJob(job, config, options);
+    return processManualTabsAuditJob(job, config, options);
 }
 return processStaticAuditJob(job, config, options);
 ```
@@ -651,6 +662,7 @@ git commit -m "feat: audit authenticated chrome tabs"
 ### Task 6: Preserve Report Structure And Enforce Manual Evidence Privacy
 
 **Files:**
+
 - Modify: `src/types/report.ts`
 - Modify: `src/report/workbook.ts`
 - Modify: `src/worker/report-files.ts`
@@ -741,6 +753,7 @@ git commit -m "feat: report manual tab audits safely"
 ### Task 7: Add The Manual Chrome Tabs Mode To The Existing Web UI
 
 **Files:**
+
 - Create: `web/src/manual-chrome.ts`
 - Modify: `web/src/App.tsx`
 - Modify: `web/src/job-detail.ts`
@@ -864,6 +877,7 @@ git commit -m "feat: add manual chrome tabs web mode"
 ### Task 8: Document, Review, And Verify The Complete Feature
 
 **Files:**
+
 - Modify: `README.md`
 - Modify: `.env.example`
 - Modify: `docs/superpowers/plans/2026-06-11-manual-chrome-tabs-audit.md`

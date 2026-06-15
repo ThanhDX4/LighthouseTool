@@ -17,7 +17,7 @@ function manualConfig(overrides: Partial<ManualTabsAuditConfig> = {}): ManualTab
     mode: "manual-tabs",
     displayName: "Manual checkout",
     baseUrl: "https://app.example.com",
-    paths: ["/manual-tabs/01-dashboard"],
+    paths: ["/01-dashboard"],
     formFactors: ["desktop"],
     categories: ["performance"],
     runsPerPage: 1,
@@ -45,7 +45,7 @@ function manualConfig(overrides: Partial<ManualTabsAuditConfig> = {}): ManualTab
             serverInstanceId: BOOT_ID,
             auditUrl: "https://app.example.com/dashboard?token=secret-query",
             displayUrl: "https://app.example.com/dashboard",
-            route: "/manual-tabs/01-dashboard",
+            route: "/01-dashboard",
             selectedAt: "2026-06-11T00:00:00.000Z"
           }
         ]
@@ -211,7 +211,7 @@ describe("manual-tabs worker", () => {
     const { store } = buildStore();
 
     const compareConfig = manualConfig({
-      paths: ["/manual-tabs/checkout"],
+      paths: ["/checkout"],
       manualChrome: {
         cachePolicy: "preserve-profile",
         evidenceMode: "none",
@@ -220,7 +220,7 @@ describe("manual-tabs worker", () => {
           ownerToken: OWNER_TOKEN,
           fencingNumber: FENCING_NUMBER,
           compareWarnings: [
-            { reason: "UNBALANCED_ROUTE", displayUrl: "https://dev1.example.com/promo", detail: "/manual-tabs/promo" }
+            { reason: "UNBALANCED_ROUTE", displayUrl: "https://dev1.example.com/promo", detail: "/promo" }
           ],
           targets: [
             {
@@ -230,7 +230,7 @@ describe("manual-tabs worker", () => {
               serverInstanceId: BOOT_ID,
               auditUrl: "https://dev1.example.com/checkout",
               displayUrl: "https://dev1.example.com/checkout",
-              route: "/manual-tabs/checkout",
+              route: "/checkout",
               selectedAt: "2026-06-12T00:00:00.000Z",
               environment: { name: "Dev 1", baseUrl: "https://dev1.example.com" }
             },
@@ -241,7 +241,7 @@ describe("manual-tabs worker", () => {
               serverInstanceId: BOOT_ID,
               auditUrl: "https://dev3.example.com/checkout",
               displayUrl: "https://dev3.example.com/checkout",
-              route: "/manual-tabs/checkout",
+              route: "/checkout",
               selectedAt: "2026-06-12T00:00:00.000Z",
               environment: { name: "Dev 3", baseUrl: "https://dev3.example.com" }
             }

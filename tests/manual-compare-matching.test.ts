@@ -31,10 +31,10 @@ describe("matchTabsToEnvironments", () => {
     ]);
     expect(result.warnings).toEqual([]);
     expect(result.assignments).toEqual([
-      { targetId: "t-dev1-checkout", envName: "Dev 1", route: "/manual-tabs/checkout" },
-      { targetId: "t-dev3-checkout", envName: "Dev 3", route: "/manual-tabs/checkout" },
-      { targetId: "t-dev1-cart", envName: "Dev 1", route: "/manual-tabs/cart" },
-      { targetId: "t-dev3-cart", envName: "Dev 3", route: "/manual-tabs/cart" }
+      { targetId: "t-dev1-checkout", envName: "Dev 1", route: "/checkout" },
+      { targetId: "t-dev3-checkout", envName: "Dev 3", route: "/checkout" },
+      { targetId: "t-dev1-cart", envName: "Dev 1", route: "/cart" },
+      { targetId: "t-dev3-cart", envName: "Dev 3", route: "/cart" }
     ]);
   });
 
@@ -68,12 +68,12 @@ describe("matchTabsToEnvironments", () => {
     expect(result.assignments).toContainEqual({
       targetId: "t-dev1-only",
       envName: "Dev 1",
-      route: "/manual-tabs/promo"
+      route: "/promo"
     });
     expect(result.warnings).toContainEqual({
       reason: "UNBALANCED_ROUTE",
       displayUrl: "https://dev1.example.com/promo",
-      detail: "/manual-tabs/promo"
+      detail: "/promo"
     });
   });
 
@@ -87,14 +87,14 @@ describe("matchTabsToEnvironments", () => {
     const result = matchTabsToEnvironments(tabs, anchors);
 
     const dev1Checkout = result.assignments.filter(
-      (a) => a.envName === "Dev 1" && a.route === "/manual-tabs/checkout"
+      (a) => a.envName === "Dev 1" && a.route === "/checkout"
     );
     expect(dev1Checkout).toHaveLength(1);
     expect(dev1Checkout[0]!.targetId).toBe("t-dev1-checkout");
     expect(result.warnings).toContainEqual({
       reason: "DUPLICATE_PATHNAME",
       displayUrl: "https://dev1.example.com/checkout?ref=x",
-      detail: "/manual-tabs/checkout"
+      detail: "/checkout"
     });
   });
 

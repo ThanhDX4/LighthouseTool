@@ -50,10 +50,10 @@ The new mode should be explicit in the job config instead of inferred from auth 
 type AuditMode = "static" | "manual-tabs";
 
 interface ManualChromeConfig {
-  scanId: string;
-  targetIds: string[];
-  cachePolicy: "preserve-profile";
-  evidenceMode: "none" | "html";
+    scanId: string;
+    targetIds: string[];
+    cachePolicy: "preserve-profile";
+    evidenceMode: "none" | "html";
 }
 ```
 
@@ -67,18 +67,18 @@ Manual mode has its own payload shape and does not require `baseUrl`, `paths`, `
 
 ```json
 {
-  "mode": "manual-tabs",
-  "displayName": "Manual authenticated checkout flow",
-  "formFactors": ["desktop", "mobile"],
-  "categories": ["performance", "accessibility", "best-practices", "seo"],
-  "runsPerPage": 3,
-  "throttling": { "preset": "slow-4g" },
-  "manualChrome": {
-    "scanId": "scan_abc123",
-    "targetIds": ["target-1", "target-2"],
-    "cachePolicy": "preserve-profile",
-    "evidenceMode": "none"
-  }
+    "mode": "manual-tabs",
+    "displayName": "Manual authenticated checkout flow",
+    "formFactors": ["desktop", "mobile"],
+    "categories": ["performance", "accessibility", "best-practices", "seo"],
+    "runsPerPage": 3,
+    "throttling": { "preset": "slow-4g" },
+    "manualChrome": {
+        "scanId": "scan_abc123",
+        "targetIds": ["target-1", "target-2"],
+        "cachePolicy": "preserve-profile",
+        "evidenceMode": "none"
+    }
 }
 ```
 
@@ -92,7 +92,7 @@ Manual mode derivation rules:
 - `paths` is not user-entered. The worker builds one internal route label per selected tab.
 - `environments` and environment compare are disabled for the first release.
 - `basicAuth` and `formLogin` are forced to disabled.
-- Duplicate pathnames across tabs are allowed. Route identity uses a unique generated label, for example `/manual-tabs/01-checkout`, while the report also displays the sanitized tab URL.
+- Duplicate pathnames across tabs are allowed. Route identity uses a unique generated label, for example `/01-checkout`, while the report also displays the sanitized tab URL.
 - A manual job is rejected if the scan snapshot has expired or if no selected target IDs are still valid.
 - A manual job is rejected if another manual job is pending or running for the profile.
 
@@ -102,14 +102,14 @@ Queued manual target descriptor:
 
 ```ts
 interface ManualChromeTargetDescriptor {
-  targetId: string;
-  profileSessionId: string;
-  ownerNonce: string;
-  serverInstanceId: string;
-  auditUrl: string; // raw URL frozen at job submission
-  displayUrl: string; // sanitized origin + pathname for UI/report metadata
-  title?: string; // UI-only unless title reporting is explicitly enabled later
-  selectedAt: string;
+    targetId: string;
+    profileSessionId: string;
+    ownerNonce: string;
+    serverInstanceId: string;
+    auditUrl: string; // raw URL frozen at job submission
+    displayUrl: string; // sanitized origin + pathname for UI/report metadata
+    title?: string; // UI-only unless title reporting is explicitly enabled later
+    selectedAt: string;
 }
 ```
 
@@ -180,23 +180,23 @@ The existing web app gets a mode switch:
 In `Manual Chrome Tabs` mode:
 
 1. The user sees setup guidance:
-   - Click `Open Chrome profile` if it is not already running.
-   - Manually complete OTP/login/verification in each target tab.
-   - Leave each target page open.
-   - Return to the tool and click `Scan tabs`.
+    - Click `Open Chrome profile` if it is not already running.
+    - Manually complete OTP/login/verification in each target tab.
+    - Leave each target page open.
+    - Return to the tool and click `Scan tabs`.
 2. `Scan tabs` calls the backend and displays:
-   - total open tabs detected,
-   - selectable valid tabs,
-   - skipped tabs with reasons.
+    - total open tabs detected,
+    - selectable valid tabs,
+    - skipped tabs with reasons.
 3. The user selects tabs to audit.
 4. The user configures shared Lighthouse settings:
-   - form factors,
-   - categories,
-   - runs per page,
-   - throttling.
+    - form factors,
+    - categories,
+    - runs per page,
+    - throttling.
 5. The user chooses evidence mode:
-   - `No HTML evidence` by default,
-   - `Generate HTML evidence` only after an explicit authenticated-content warning.
+    - `No HTML evidence` by default,
+    - `Generate HTML evidence` only after an explicit authenticated-content warning.
 6. The user starts the audit.
 7. Progress events should identify the sanitized display URL currently being audited.
 8. The final job detail/download view should stay consistent with the existing job flow.
@@ -215,12 +215,12 @@ This endpoint starts the dedicated Chrome profile if it is not already running u
 
 ```json
 {
-  "enabled": true,
-  "running": true,
-  "busy": false,
-  "profileSessionId": "profile_abc123",
-  "remoteDebuggingUrl": "http://127.0.0.1:9222",
-  "profileDir": ".lh-audit/chrome-profile"
+    "enabled": true,
+    "running": true,
+    "busy": false,
+    "profileSessionId": "profile_abc123",
+    "remoteDebuggingUrl": "http://127.0.0.1:9222",
+    "profileDir": ".lh-audit/chrome-profile"
 }
 ```
 
@@ -234,27 +234,27 @@ Response shape:
 
 ```json
 {
-  "scanId": "scan_abc123",
-  "expiresAt": "2026-06-11T10:10:00.000Z",
-  "busy": false,
-  "remoteDebuggingUrl": "http://127.0.0.1:9222",
-  "tabs": [
-    {
-      "id": "target-id",
-      "title": "Account dashboard",
-      "displayUrl": "https://example.com/account",
-      "hasHiddenUrlParts": false,
-      "valid": true
-    }
-  ],
-  "skipped": [
-    {
-      "id": "target-id",
-      "title": "DevTools",
-      "displayUrl": "devtools://...",
-      "reason": "Unsupported URL scheme"
-    }
-  ]
+    "scanId": "scan_abc123",
+    "expiresAt": "2026-06-11T10:10:00.000Z",
+    "busy": false,
+    "remoteDebuggingUrl": "http://127.0.0.1:9222",
+    "tabs": [
+        {
+            "id": "target-id",
+            "title": "Account dashboard",
+            "displayUrl": "https://example.com/account",
+            "hasHiddenUrlParts": false,
+            "valid": true
+        }
+    ],
+    "skipped": [
+        {
+            "id": "target-id",
+            "title": "DevTools",
+            "displayUrl": "devtools://...",
+            "reason": "Unsupported URL scheme"
+        }
+    ]
 }
 ```
 
@@ -274,8 +274,8 @@ Manual endpoint error bodies use a stable shape:
 
 ```json
 {
-  "error": "Manual Chrome is busy",
-  "code": "MANUAL_CHROME_BUSY"
+    "error": "Manual Chrome is busy",
+    "code": "MANUAL_CHROME_BUSY"
 }
 ```
 
@@ -306,16 +306,16 @@ For `manual-tabs` jobs:
 4. Verify the Redis session record and marker target match the `profileSessionId` and `ownerNonce` in the encrypted target descriptors.
 5. Connect to the app-owned local CDP endpoint with Puppeteer.
 6. For each selected tab and form factor:
-   - resolve the matching `Page` by selected target ID,
-   - navigate through Lighthouse using the frozen `auditUrl` from the target descriptor,
-   - run `runsPerPage` sequential Lighthouse runs,
-   - pass the `Puppeteer.Page` to Lighthouse,
-   - set `disableStorageReset: true`,
-   - avoid closing the browser or profile.
+    - resolve the matching `Page` by selected target ID,
+    - navigate through Lighthouse using the frozen `auditUrl` from the target descriptor,
+    - run `runsPerPage` sequential Lighthouse runs,
+    - pass the `Puppeteer.Page` to Lighthouse,
+    - set `disableStorageReset: true`,
+    - avoid closing the browser or profile.
 7. Map each tab to a route report:
-   - `route`: generated unique route label,
-   - `url`: sanitized display URL,
-   - no tab title by default because titles may contain PII.
+    - `route`: generated unique route label,
+    - `url`: sanitized display URL,
+    - no tab title by default because titles may contain PII.
 8. Reuse `runRouteAudits`, `extractFormFactorReport`, `writeReportFiles`, and `buildAuditWorkbook`.
 9. Disconnect Puppeteer after the job but do not close Chrome.
 10. Release the per-profile manual audit lock only if the lock owner token still matches.
@@ -379,12 +379,12 @@ Validation rules:
 - Manual mode requires an explicit non-empty allowed-host allowlist, and selected tab URLs plus final redirected URLs must pass it.
 - Manual mode must reject a redirect chain as soon as any hop leaves the allowed-host allowlist.
 - Internal URL schemes are skipped:
-  - `chrome:`
-  - `devtools:`
-  - `about:`
-  - `edge:`
-  - `file:`
-  - `data:`
+    - `chrome:`
+    - `devtools:`
+    - `about:`
+    - `edge:`
+    - `file:`
+    - `data:`
 
 Security rules:
 

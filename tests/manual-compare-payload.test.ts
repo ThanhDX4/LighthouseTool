@@ -131,8 +131,8 @@ describe("previewCompareMatch", () => {
     const preview = previewCompareMatch(tabs, ["t1", "t2", "t3", "t4"], compare.environments);
 
     expect(preview.environments).toEqual([
-      { name: "Dev 1", host: "dev1.example.com", routes: ["/manual-tabs/checkout", "/manual-tabs/cart"] },
-      { name: "Dev 3", host: "dev3.example.com", routes: ["/manual-tabs/checkout", "/manual-tabs/cart"] }
+      { name: "Dev 1", host: "dev1.example.com", routes: ["/checkout", "/cart"] },
+      { name: "Dev 3", host: "dev3.example.com", routes: ["/checkout", "/cart"] }
     ]);
     expect(preview.warnings).toEqual([]);
   });
@@ -144,7 +144,7 @@ describe("previewCompareMatch", () => {
     expect(preview.warnings).toContainEqual({
       reason: "UNBALANCED_ROUTE",
       displayUrl: "https://dev1.example.com/promo",
-      detail: "/manual-tabs/promo"
+      detail: "/promo"
     });
   });
 

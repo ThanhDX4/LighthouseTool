@@ -45,8 +45,8 @@ export async function runManualTabLighthouse(options: RunManualTabOptions): Prom
   assertAuditableUrl(auditUrl);
 
   // Park the tab at about:blank before invoking Lighthouse. The audited tab is
-  // usually already at `auditUrl` (and may have an active service worker,
-  // BFCache snapshot, or other hot state), which causes Lighthouse's trace
+  // usually already at `auditUrl` and may have an active service worker,
+  // BFCache snapshot, or other hot state, which causes Lighthouse's trace
   // processor to throw NO_NAVSTART because Chrome short-circuits the
   // navigation and never emits a fresh `navigationStart` event. Cookies and
   // localStorage are origin-scoped and persist across this about:blank trip,
@@ -57,6 +57,7 @@ export async function runManualTabLighthouse(options: RunManualTabOptions): Prom
   } catch {
     preBlankUrl = undefined;
   }
+
   log.info(
     { action: "run.begin", formFactor, currentUrl: preBlankUrl, auditUrl },
     "Manual tab Lighthouse run starting"
@@ -89,17 +90,21 @@ export async function runManualTabLighthouse(options: RunManualTabOptions): Prom
     disableStorageReset: true
   };
 
+  let lhConfig: any | undefined;
+
   if (formFactor === "desktop") {
+    lhConfig = (await import("lighthouse/core/config/desktop-config.js")).default;
     flags.screenEmulation = defaultDesktopViewport;
   } else {
     flags.throttlingMethod = "simulate";
     flags.throttling = resolveMobileThrottling(config);
   }
 
-  const run = (lighthouse as any)(auditUrl, flags, undefined, page);
+  const run = (lighthouse as any)(auditUrl, flags, lhConfig, page);
   const result = await withTimeout<any>(run, options.timeoutMs ?? DEFAULT_TIMEOUT_MS);
 
   if (!result?.lhr) throw new Error("Lighthouse returned no LHR");
+
   if (result.lhr.runtimeError) {
     log.error(
       {
@@ -109,6 +114,7 @@ export async function runManualTabLighthouse(options: RunManualTabOptions): Prom
       },
       "Lighthouse returned a runtimeError"
     );
+
     throw new Error(`runtimeError: ${result.lhr.runtimeError.code ?? result.lhr.runtimeError.message}`);
   }
 
@@ -122,20 +128,33 @@ export async function runManualTabLighthouse(options: RunManualTabOptions): Prom
  * not be present (e.g. on the first run).
  */
 async function clearPageEmulation(page: Page): Promise<void> {
-  let cdp: { send(method: string, params?: unknown): Promise<unknown>; detach(): Promise<void> } | undefined;
+  let cdp:
+    | {
+        send(method: string, params?: unknown): Promise<unknown>;
+        detach(): Promise<void>;
+      }
+    | undefined;
+
   try {
     cdp = (await page.target().createCDPSession()) as unknown as typeof cdp;
   } catch (error) {
-    log.warn({ action: "emulation.reset.sessionFailed", err: error }, "Could not open CDP session to clear emulation");
+    log.warn(
+      { action: "emulation.reset.sessionFailed", err: error },
+      "Could not open CDP session to clear emulation"
+    );
     return;
   }
+
   if (!cdp) return;
 
   const safeSend = async (method: string, params?: unknown) => {
     try {
       await cdp!.send(method, params);
     } catch (error) {
-      log.debug({ action: "emulation.reset.cmdFailed", method, err: error }, "Emulation reset command failed");
+      log.debug(
+        { action: "emulation.reset.cmdFailed", method, err: error },
+        "Emulation reset command failed"
+      );
     }
   };
 
@@ -159,11 +178,13 @@ async function clearPageEmulation(page: Page): Promise<void> {
 
 function assertAuditableUrl(value: string): void {
   let url: URL;
+
   try {
     url = new URL(value);
   } catch {
     throw new Error("Invalid tab URL");
   }
+
   if (url.protocol !== "http:" && url.protocol !== "https:") {
     throw new Error(`Unsupported URL scheme: ${url.protocol}`);
   }
