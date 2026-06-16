@@ -193,6 +193,14 @@ function sanitizeEvidencePart(value: string): string {
     // If parsing fails, fall back to the original value.
   }
 
+  // If the value contains a query or hash (e.g. '/path?a=1' or '/path#frag'), strip them
+  const queryIndex = part.indexOf("?");
+  const hashIndex = part.indexOf("#");
+  const cutIndex = [queryIndex, hashIndex].filter((i) => i >= 0).sort((a, b) => a - b)[0];
+  if (typeof cutIndex === "number") {
+    part = part.slice(0, cutIndex);
+  }
+
   const routePart = part === "/" ? "root" : String(part).replace(/^\/+/, "");
   return routePart.replace(/[^a-zA-Z0-9.-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80) || "report";
 }

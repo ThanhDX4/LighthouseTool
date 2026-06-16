@@ -314,7 +314,7 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
     const jobsRoot = resolve(options.dataDir, "jobs");
     const evidenceRoot = resolve(jobsRoot, id, "evidence");
     const reportPath = resolve(evidenceRoot, fileName);
-      if (!isPathInside(jobsRoot, evidenceRoot) || !isPathInside(evidenceRoot, reportPath) || !existsSync(reportPath)) {
+    if (!isPathInside(jobsRoot, evidenceRoot) || !isPathInside(evidenceRoot, reportPath) || !existsSync(reportPath)) {
         // Try compatibility fallbacks for legacy filenames that were generated
         // from full URLs and may contain encoded path segments (e.g. "-2F" sequences)
         // or were double-encoded. Attempt a few deterministic transforms and
@@ -349,6 +349,24 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
           }
 
           if (foundPath) {
+            // If the found file is the index HTML, inject the token into relative links
+            if (foundPath.endsWith(`${sep}index.html`)) {
+              try {
+                const content = await readFile(foundPath, "utf8");
+                const tokenParam = token ? `?token=${encodeURIComponent(token)}` : "";
+                const transformed = content.replace(/href="\.\/([^\"]+\.html)"/g, (m, p1) => {
+                  // append token param to relative html links
+                  return `href="./${p1}${tokenParam}"`;
+                });
+                reply.header("Content-Type", "text/html; charset=utf-8");
+                reply.header("Content-Disposition", `inline; filename="${sanitizeFilenamePart(foundPath)}"`);
+                reply.header("Content-Security-Policy", lighthouseEvidenceCsp);
+                return reply.send(transformed);
+              } catch (err) {
+                // fall through to try serving as stream below
+              }
+            }
+
             // serve the found file
             reply.header("Content-Type", "text/html; charset=utf-8");
             reply.header("Content-Disposition", `inline; filename="${sanitizeFilenamePart(foundPath)}"`);
