@@ -158,9 +158,7 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
   });
 
   app.post("/jobs", async (request, reply) => {
-    if (!verifyRateLimit(request.ip)) {
-      return reply.code(429).send({ error: "Rate limit exceeded" });
-    }
+   
     if (!verifyCsrf(request.headers.cookie, request.headers["x-csrf-token"])) {
       return reply.code(403).send({ error: "Invalid CSRF token" });
     }
@@ -359,9 +357,7 @@ async function handleManualChromeRequest(
 ): Promise<unknown> {
   reply.header("Cache-Control", "no-store");
 
-  if (!verifyRateLimit(request.ip)) {
-    return reply.code(429).send({ error: "Rate limit exceeded" });
-  }
+  
 
   const access = evaluateManualRequestAccess({
     remoteAddress: request.socket.remoteAddress ?? undefined,
