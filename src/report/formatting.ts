@@ -34,8 +34,8 @@ function nextPriority(sheet: ExcelJS.Worksheet): number {
 
 export function styleHeaderRow(row: ExcelJS.Row): void {
   row.eachCell((cell) => {
-    cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
-    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: SCORE_COLORS.header } };
+    // Keep header bold but avoid setting colors/fills for Excel web compatibility
+    cell.font = { bold: true };
     cell.alignment = { vertical: "middle" };
   });
 }
@@ -50,8 +50,8 @@ export function applyScoreFormatting(sheet: ExcelJS.Worksheet, ref: string): voi
         formulae: ["50"],
         priority: nextPriority(sheet),
         style: {
-          fill: { type: "pattern", pattern: "solid", fgColor: { argb: SCORE_COLORS.poor } },
-          font: { color: { argb: "FFFFFFFF" }, bold: true }
+          // Avoid color/fill for compatibility with Excel for the web; use bold instead
+          font: { bold: true }
         }
       },
       {
@@ -60,8 +60,7 @@ export function applyScoreFormatting(sheet: ExcelJS.Worksheet, ref: string): voi
         formulae: ["50", "89"],
         priority: nextPriority(sheet),
         style: {
-          fill: { type: "pattern", pattern: "solid", fgColor: { argb: SCORE_COLORS.average } },
-          font: { color: { argb: "FF000000" } }
+          font: { bold: true }
         }
       },
       {
@@ -70,8 +69,7 @@ export function applyScoreFormatting(sheet: ExcelJS.Worksheet, ref: string): voi
         formulae: ["89"],
         priority: nextPriority(sheet),
         style: {
-          fill: { type: "pattern", pattern: "solid", fgColor: { argb: SCORE_COLORS.good } },
-          font: { color: { argb: "FFFFFFFF" }, bold: true }
+          font: { bold: true }
         }
       }
     ]
@@ -88,14 +86,15 @@ export function applyMetricFormatting(sheet: ExcelJS.Worksheet, ref: string, met
         operator: "between",
         formulae: ["0", String(thresholds.good)],
         priority: nextPriority(sheet),
-        style: { fill: { type: "pattern", pattern: "solid", fgColor: { argb: SCORE_COLORS.good } } }
+        // Avoid fill color for Excel web compatibility
+        style: { font: { bold: true } }
       },
       {
         type: "cellIs",
         operator: "between",
         formulae: [String(thresholds.good), String(thresholds.average)],
         priority: nextPriority(sheet),
-        style: { fill: { type: "pattern", pattern: "solid", fgColor: { argb: SCORE_COLORS.average } } }
+        style: { font: { bold: true } }
       },
       {
         type: "cellIs",
@@ -103,8 +102,7 @@ export function applyMetricFormatting(sheet: ExcelJS.Worksheet, ref: string, met
         formulae: [String(thresholds.average)],
         priority: nextPriority(sheet),
         style: {
-          fill: { type: "pattern", pattern: "solid", fgColor: { argb: SCORE_COLORS.poor } },
-          font: { color: { argb: "FFFFFFFF" } }
+          font: { bold: true }
         }
       }
     ]
