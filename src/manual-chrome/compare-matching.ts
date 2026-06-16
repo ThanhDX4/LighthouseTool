@@ -1,6 +1,7 @@
 import { slugifyPathname } from "./route-slug.js";
 import type { AuditEnvironment } from "../types/config.js";
 
+
 export interface CompareAnchor {
   /** User-given environment name, e.g. "Dev 1". */
   name: string;
@@ -56,10 +57,16 @@ interface ResolvedAnchor {
  * (missing anchor tab, anchors sharing a host); recoverable selection issues are
  * surfaced as warnings instead.
  */
+export interface MatchOptions {
+  includeQuery?: boolean;
+}
+
 export function matchTabsToEnvironments(
   selectedTabs: readonly CompareTabInput[],
-  anchors: readonly [CompareAnchor, CompareAnchor]
+  anchors: readonly [CompareAnchor, CompareAnchor],
+  options: MatchOptions = {}
 ): CompareMatchResult {
+  const includeQuery = Boolean(options.includeQuery);
   const resolved: [ResolvedAnchor, ResolvedAnchor] = [
     resolveAnchor(anchors[0], selectedTabs),
     resolveAnchor(anchors[1], selectedTabs)
@@ -87,7 +94,10 @@ export function matchTabsToEnvironments(
       continue;
     }
 
-    const route = buildCompareRoute(url.pathname);
+  // Build route using pathname (and optionally search) so callers can
+  // choose whether query parameters participate in the comparison.
+  const pathToUse = includeQuery ? `${url.pathname}${url.search}` : url.pathname;
+  const route = buildCompareRoute(pathToUse);
     const seen = seenRoutesByEnv.get(envName) ?? new Set<string>();
     if (seen.has(route)) {
       warnings.push({ reason: "DUPLICATE_PATHNAME", displayUrl: tab.displayUrl, detail: route });
@@ -153,6 +163,7 @@ function parseUrl(rawUrl: string): URL | null {
   }
 }
 
-function buildCompareRoute(pathname: string): string {
-  return `${slugifyPathname(pathname)}`;
+function buildCompareRoute(pathAndSearch: string): string {
+  const slug = slugifyPathname(pathAndSearch);
+  return `/${slug}`;
 }

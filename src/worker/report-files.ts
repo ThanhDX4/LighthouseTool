@@ -181,7 +181,19 @@ function buildEvidenceFileName(run: LighthouseEvidenceRun, index: number): strin
 }
 
 function sanitizeEvidencePart(value: string): string {
-  const routePart = value === "/" ? "root" : value.replace(/^\/+/, "");
+  let part = value;
+  // If a full URL was provided accidentally, use only the pathname so file
+  // names don't contain protocol/host/query/hash parts.
+  try {
+    if (/^https?:\/\//i.test(part)) {
+      const parsed = new URL(part);
+      part = parsed.pathname || "/";
+    }
+  } catch {
+    // If parsing fails, fall back to the original value.
+  }
+
+  const routePart = part === "/" ? "root" : String(part).replace(/^\/+/, "");
   return routePart.replace(/[^a-zA-Z0-9.-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80) || "report";
 }
 

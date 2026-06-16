@@ -72,6 +72,7 @@ export interface ManualCompareAnchorInput {
 export interface ManualCompareInput {
     enabled: boolean;
     environments: [ManualCompareAnchorInput, ManualCompareAnchorInput];
+    includeQuery?: boolean;
 }
 
 export interface ManualComparePreviewEnvironment {
@@ -193,6 +194,7 @@ export function buildManualPayload(input: ManualPayloadInput): ManualJobPayload 
                           anchorTargetId: compare!.environments[1].anchorTargetId,
                       },
                   ] as [ManualCompareAnchorInput, ManualCompareAnchorInput],
+                  includeQuery: compare!.includeQuery ?? true,
               },
           }
         : {};

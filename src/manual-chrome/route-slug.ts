@@ -4,6 +4,8 @@
  * identical labels for the same pathname.
  */
 export function slugifyPathname(pathname: string): string {
-  const slug = pathname
-  return slug || "root";
+  const slug = String(pathname || "");
+  // Remove any leading slash so callers can compose prefixes cleanly.
+  const cleaned = slug.replace(/^\//, "");
+  return cleaned || "root";
 }

@@ -65,6 +65,22 @@ export function ManualCompareSection({
 
             {compare.enabled ? (
                 <div className="mt-4 space-y-4">
+                    <div className="px-1">
+                        <PlainCheckbox
+                            label="Include query parameters in compare"
+                            description="When enabled (default for compare jobs), routes are matched using the full path including query parameters."
+                            checked={compare.includeQuery ?? true}
+                            disabled={disabled ?? false}
+                            onChange={() =>
+                                onChange({
+                                    ...compare,
+                                    includeQuery: !(
+                                        compare.includeQuery ?? true
+                                    ),
+                                })
+                            }
+                        />
+                    </div>
                     <div className="grid gap-3 sm:grid-cols-2">
                         {([0, 1] as const).map((index) => {
                             const environment = compare.environments[index];

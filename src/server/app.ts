@@ -314,15 +314,74 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
     const jobsRoot = resolve(options.dataDir, "jobs");
     const evidenceRoot = resolve(jobsRoot, id, "evidence");
     const reportPath = resolve(evidenceRoot, fileName);
-    if (!isPathInside(jobsRoot, evidenceRoot) || !isPathInside(evidenceRoot, reportPath) || !existsSync(reportPath)) {
-      return reply.code(404).send({ error: "Evidence report not found" });
-    }
+      if (!isPathInside(jobsRoot, evidenceRoot) || !isPathInside(evidenceRoot, reportPath) || !existsSync(reportPath)) {
+        // Try compatibility fallbacks for legacy filenames that were generated
+        // from full URLs and may contain encoded path segments (e.g. "-2F" sequences)
+        // or were double-encoded. Attempt a few deterministic transforms and
+        // look for an existing file in the evidence folder before returning 404.
+        try {
+          const candidates = new Set<string>();
+
+          // 1) try decodeURIComponent (may throw on invalid sequences)
+          try {
+            candidates.add(decodeURIComponent(fileName));
+          } catch (err) {
+            // ignore
+          }
+
+          // 2) replace common encoded slash token "-2F" used by previous sanitizer
+          candidates.add(fileName.replace(/-2F/g, "-"));
+
+          // 3) collapse repeated hyphens which sometimes resulted from sanitization
+          candidates.add(fileName.replace(/--+/g, "-"));
+
+          // 4) strip any leading './' or '/' segments
+          candidates.add(fileName.replace(/^\.\//, ""));
+
+          // For each candidate, check if a file with that name exists in evidenceRoot
+          let foundPath: string | undefined;
+          for (const candidate of candidates) {
+            const candidatePath = resolve(evidenceRoot, candidate);
+            if (isPathInside(evidenceRoot, candidatePath) && existsSync(candidatePath)) {
+              foundPath = candidatePath;
+              break;
+            }
+          }
+
+          if (foundPath) {
+            // serve the found file
+            reply.header("Content-Type", "text/html; charset=utf-8");
+            reply.header("Content-Disposition", `inline; filename="${sanitizeFilenamePart(foundPath)}"`);
+            reply.header("Content-Security-Policy", lighthouseEvidenceCsp);
+            return reply.send(createReadStream(foundPath));
+          }
+        } catch (err) {
+          // ignore errors from fallback logic and fall through to 404
+        }
+
+        return reply.code(404).send({ error: "Evidence report not found" });
+      }
 
     reply.header("Content-Type", "text/html; charset=utf-8");
     reply.header("Content-Disposition", `inline; filename="${sanitizeFilenamePart(fileName)}"`);
     reply.header("Content-Security-Policy", lighthouseEvidenceCsp);
     return reply.send(createReadStream(reportPath));
   });
+
+  // Some dev setups or Service Worker libraries request /mockServiceWorker.js; if the
+  // file isn't present in the built static bundle return a tiny noop JS instead of 404
+  // so the UI doesn't show an error in the console.
+  if (options.staticDir) {
+    app.get("/mockServiceWorker.js", async (_request, reply) => {
+      const mswPath = resolve(options.staticDir ?? "", "mockServiceWorker.js");
+      if (existsSync(mswPath)) {
+        reply.type("application/javascript");
+        return reply.send(createReadStream(mswPath));
+      }
+      reply.type("application/javascript");
+      return reply.send("// mock service worker placeholder\n");
+    });
+  }
 
   if (options.staticDir) {
     app.get("/*", async (request, reply) => {

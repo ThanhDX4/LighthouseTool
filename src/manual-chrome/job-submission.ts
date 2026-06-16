@@ -169,7 +169,8 @@ function resolveCompareTargets(
 
   let match;
   try {
-    match = matchTabsToEnvironments(tabInputs, compare.environments);
+    // For compare jobs, include the query string in route matching by default.
+    match = matchTabsToEnvironments(tabInputs, compare.environments, { includeQuery: true });
   } catch (error) {
     return { code: "INVALID_SELECTION", message: error instanceof Error ? error.message : "Invalid compare selection" };
   }

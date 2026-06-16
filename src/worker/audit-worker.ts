@@ -193,7 +193,7 @@ async function processStaticAuditJob(
           ...runResult.successfulRuns.map((run) => ({
             environment: isCompareJob ? { ...environment } : undefined,
             route,
-            url,
+            url: route,
             formFactor,
             runIndex: run.runIndex,
             lhr: run.lhr
@@ -363,11 +363,13 @@ async function processManualTabsAuditJob(
 
     for (const target of targets) {
       const routeReport: RouteReport = {
-        route: target.route,
-        url: target.displayUrl,
-        environment: target.environment ? { ...target.environment } : undefined,
-        results: []
-      };
+          route: target.route,
+          // Use the full audit URL (includes query string) when available so the
+          // 'Full URL' Excel column contains query parameters as requested.
+          url: typeof target.auditUrl === "string" ? target.auditUrl : target.displayUrl,
+          environment: target.environment ? { ...target.environment } : undefined,
+          results: []
+        };
       const routeKey = target.environment ? `${target.environment.name} ${target.route}` : target.route;
       routes.set(routeKey, routeReport);
       const page = pagesByTarget.get(target.targetId);
@@ -483,7 +485,8 @@ async function processManualTabsAuditJob(
           ...runResult.successfulRuns.map((run) => ({
             environment: target.environment,
             route: target.route,
-            url: target.displayUrl,
+            // Use pathname for filename generation (not full URL)
+            url: target.route,
             formFactor,
             runIndex: run.runIndex,
             lhr: run.lhr
