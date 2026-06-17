@@ -194,7 +194,7 @@ export function buildManualPayload(input: ManualPayloadInput): ManualJobPayload 
                           anchorTargetId: compare!.environments[1].anchorTargetId,
                       },
                   ] as [ManualCompareAnchorInput, ManualCompareAnchorInput],
-                  includeQuery: compare!.includeQuery ?? true,
+                  ...(compare!.includeQuery === undefined ? {} : { includeQuery: compare!.includeQuery }),
               },
           }
         : {};

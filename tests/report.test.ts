@@ -211,7 +211,7 @@ describe("Excel report generation", () => {
     const workbook = await buildAuditWorkbook(manualReport);
     expect(workbook.worksheets.map((sheet) => sheet.name)).toEqual([
       "Summary",
-      "manual-tabs01-dashboard",
+      "01-dashboard",
       "Diagnostics",
       "Run Configuration"
     ]);
@@ -314,3 +314,29 @@ const compareReport = {
     }
   ]
 };
+
+it("matches environment results when report routes include numeric prefixes", async () => {
+  const prefixedCompare = {
+    ...compareReport,
+    routes: [
+      {
+        route: "/01-checkout",
+        url: "https://dev1.example.com/checkout",
+        environment: { name: "Dev 1", baseUrl: "https://dev1.example.com" },
+        results: compareReport.routes[0]!.results
+      },
+      {
+        route: "/02-checkout",
+        url: "https://dev3.example.com/checkout",
+        environment: { name: "Dev 3", baseUrl: "https://dev3.example.com" },
+        results: compareReport.routes[1]!.results
+      }
+    ]
+  } as unknown as AuditReport;
+
+  const workbook = await buildAuditWorkbook(prefixedCompare as AuditReport);
+  const compare = workbook.getWorksheet("Compare");
+  // Ensure the mobile performance values are present and matched across environments
+  expect(compare?.getCell("C3").value).toBe(85);
+  expect(compare?.getCell("D3").value).toBe(78);
+});

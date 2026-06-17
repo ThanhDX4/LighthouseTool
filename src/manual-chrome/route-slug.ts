@@ -6,6 +6,7 @@
 export function slugifyPathname(pathname: string): string {
   const slug = String(pathname || "");
   // Remove any leading slash so callers can compose prefixes cleanly.
-  const cleaned = slug.replace(/^\//, "");
+  // Trim leading and trailing slashes so '/a', '/a/' and 'a/' normalize the same.
+  const cleaned = slug.replace(/^\/+|\/+$/g, "");
   return cleaned || "root";
 }

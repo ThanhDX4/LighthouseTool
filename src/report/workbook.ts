@@ -464,7 +464,19 @@ function findEnvironmentResult(
   routePath: string,
   formFactor: FormFactor
 ): FormFactorReport | undefined {
+  const normalize = (r: string) => {
+    const str = String(r ?? "");
+    // Trim leading/trailing slashes
+    const cleaned = str.replace(/^\/+/g, "").replace(/\/+$/g, "");
+    // Remove a leading NN- numeric prefix if present (e.g. "01-")
+    const withoutPrefix = cleaned.replace(/^\d{2}-/, "");
+    // Strip query string and hash
+    const pathnameOnly = withoutPrefix.split(/[?#]/, 1)[0];
+    return `/${pathnameOnly || "root"}`;
+  };
+
+  const target = normalize(routePath);
   return report.routes
-    .find((route) => route.route === routePath && route.environment?.name === environmentName)
+    .find((route) => normalize(route.route) === target && route.environment?.name === environmentName)
     ?.results.find((result) => result.formFactor === formFactor);
 }

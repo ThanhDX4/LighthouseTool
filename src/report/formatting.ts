@@ -50,8 +50,7 @@ export function applyScoreFormatting(sheet: ExcelJS.Worksheet, ref: string): voi
         formulae: ["50"],
         priority: nextPriority(sheet),
         style: {
-          // Avoid color/fill for compatibility with Excel for the web; use bold instead
-          font: { bold: true }
+          fill: { type: "pattern", pattern: "solid", fgColor: { argb: SCORE_COLORS.poor } }
         }
       },
       {
@@ -60,7 +59,7 @@ export function applyScoreFormatting(sheet: ExcelJS.Worksheet, ref: string): voi
         formulae: ["50", "89"],
         priority: nextPriority(sheet),
         style: {
-          font: { bold: true }
+          fill: { type: "pattern", pattern: "solid", fgColor: { argb: SCORE_COLORS.average } }
         }
       },
       {
@@ -69,7 +68,7 @@ export function applyScoreFormatting(sheet: ExcelJS.Worksheet, ref: string): voi
         formulae: ["89"],
         priority: nextPriority(sheet),
         style: {
-          font: { bold: true }
+          fill: { type: "pattern", pattern: "solid", fgColor: { argb: SCORE_COLORS.good } }
         }
       }
     ]
@@ -86,15 +85,14 @@ export function applyMetricFormatting(sheet: ExcelJS.Worksheet, ref: string, met
         operator: "between",
         formulae: ["0", String(thresholds.good)],
         priority: nextPriority(sheet),
-        // Avoid fill color for Excel web compatibility
-        style: { font: { bold: true } }
+        style: { fill: { type: "pattern", pattern: "solid", fgColor: { argb: SCORE_COLORS.good } } }
       },
       {
         type: "cellIs",
         operator: "between",
         formulae: [String(thresholds.good), String(thresholds.average)],
         priority: nextPriority(sheet),
-        style: { font: { bold: true } }
+        style: { fill: { type: "pattern", pattern: "solid", fgColor: { argb: SCORE_COLORS.average } } }
       },
       {
         type: "cellIs",
@@ -102,7 +100,7 @@ export function applyMetricFormatting(sheet: ExcelJS.Worksheet, ref: string, met
         formulae: [String(thresholds.average)],
         priority: nextPriority(sheet),
         style: {
-          font: { bold: true }
+          fill: { type: "pattern", pattern: "solid", fgColor: { argb: SCORE_COLORS.poor } }
         }
       }
     ]

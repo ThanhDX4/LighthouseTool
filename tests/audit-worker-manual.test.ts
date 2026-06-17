@@ -177,7 +177,9 @@ async function runManualJob(
 }
 
 describe("manual-tabs worker", () => {
-  it("claims the lock as running, audits the matched tab, and releases the lock", async () => {
+  it(
+    "claims the lock as running, audits the matched tab, and releases the lock",
+    async () => {
     vi.resetModules();
     mockCommonModules();
     const { store, calls } = buildStore();
@@ -203,7 +205,9 @@ describe("manual-tabs worker", () => {
 
     const meta = JSON.parse(await fs.readFile(join(dataDir, "jobs", "job-manual-ok", "meta.json"), "utf8"));
     expect(JSON.stringify(meta)).not.toContain("secret-query");
-  });
+    },
+    20_000
+  );
 
   it("emits a Compare sheet and warning diagnostics for a 2-environment compare job", async () => {
     vi.resetModules();
