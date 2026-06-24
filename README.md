@@ -1,90 +1,203 @@
 # Lighthouse Audit Tool
 
-Internal web app for running median-of-N Lighthouse audits across routes and exporting one Excel workbook.
+Công cụ nội bộ để chạy Lighthouse audit (median-of-N) trên nhiều route và xuất kết quả ra file Excel.
 
-## What Is Implemented
+---
 
-- React + Vite configuration form with optional Basic Auth and form login.
-- Fastify API with CSRF protection, request validation, rate limiting, encrypted credentials, SSE progress, and one-time JWT download tokens.
-- BullMQ worker with `concurrency: 1`, fresh Chrome per run, form-login cookie preservation via `disableStorageReset`, and `computeMedianRun`.
-- ExcelJS workbook with `Summary`, per-route sheets, `Diagnostics`, and `Run Configuration`.
-- Docker packaging with Chrome stable, non-root user, Redis AOF via compose, `dumb-init`, and `/healthz`.
+## Tính năng chính
 
-## Local Development
+### **Chế độ Static Flow (mặc định)**
+
+- Form cấu hình React + Vite với hỗ trợ Basic Auth và form login
+- API Fastify: CSRF protection, validation, rate limiting, mã hóa credentials, SSE progress, JWT download token
+- Worker BullMQ (`concurrency: 1`): Chrome mới mỗi lần chạy, giữ cookie form-login, tính median qua `computeMedianRun`
+- Xuất Excel: sheet `Summary`, sheet theo route, `Diagnostics`, `Run Configuration`
+
+### **Chế độ Manual Chrome Tabs** _(tùy chọn)_
+
+- Audit các tab đã xác thực (OTP/login) trong Chrome profile riêng
+- **Chỉ dùng local, single-user** — tắt mặc định, chỉ chấp nhận loopback caller
+- Yêu cầu `MANUAL_CHROME_ENABLED=true` và `ALLOWED_HOSTS` (whitelist domain)
+- Chrome profile tái sử dụng được, không cần login lại giữa các lần chạy
+- **Privacy:** URL hiển thị chỉ gồm `origin + pathname` (không lưu query/fragment), HTML evidence tắt mặc định
+
+---
+
+## Cài đặt & Chạy
+
+### **Yêu cầu**
+
+- Node.js (khuyến nghị LTS)
+- pnpm (corepack)
+- Redis (local hoặc remote)
+- Chrome/Chromium
+
+### **Development Mode**
 
 ```bash
+# Cài đặt dependencies
 corepack enable
 pnpm install
+
+# Terminal 1: Chạy API + UI (Vite dev server)
 pnpm run dev
+
+# Terminal 2: Chạy Worker
 pnpm run dev:worker
-pnpm run dev:web
 ```
 
-The Vite UI runs on `http://localhost:5173` and proxies API calls to `http://localhost:3000`.
+- **UI:** `http://localhost:5173` (proxy API → `http://localhost:3000`)
+- **Secrets thiếu:** Tự động dùng giá trị dev mặc định
 
-To run the built tool on `http://localhost:3000`, start both the API server and worker:
+### **Production Build**
 
 ```bash
+# Build ứng dụng
 pnpm run build
+
+# Chạy cả API server + worker
 pnpm start
 ```
 
-Use `pnpm run start:server` only when you intentionally want the API/static server without processing Lighthouse jobs.
+**Lưu ý:**
 
-For local development, missing secrets are replaced with dev-only process secrets. Production requires `ENCRYPTION_KEY` and `DOWNLOAD_TOKEN_SECRET`.
+- Yêu cầu `ENCRYPTION_KEY` và `DOWNLOAD_TOKEN_SECRET` trong `.env`
+- Chỉ chạy API server (không worker): `pnpm run start:server`
 
-## Docker
+### **Cấu hình Environment**
 
 ```bash
+# Tạo file .env từ template
 cp .env.example .env
+
+# Tạo ENCRYPTION_KEY (32 bytes base64)
 node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
-docker compose up --build
 ```
 
-Run the container with `--init` and `--shm-size=2g` when not using compose.
+**Biến môi trường quan trọng:**
 
-## Manual Chrome Tabs (authenticated / OTP pages)
+- `ENCRYPTION_KEY`: Mã hóa credentials (bắt buộc production)
+- `DOWNLOAD_TOKEN_SECRET`: JWT token cho download (bắt buộc production)
+- `ALLOWED_HOSTS`: Whitelist domain (khuyến nghị)
+- `REDIS_URL`: Kết nối Redis (mặc định `redis://localhost:6379`)
 
-The static flow launches a fresh headless Chrome per run, which cannot reach pages behind OTP or user-specific verification. The `Manual Chrome Tabs` mode instead audits tabs you have already authenticated in a dedicated, app-owned Chrome profile.
+---
 
-**Security model — local single-user only.** This mode is disabled unless explicitly enabled, and the API and worker only accept loopback callers. Keep it disabled on shared, tunneled, reverse-proxied, or production deployments. The server ignores `X-Forwarded-*` headers for this decision, so a proxy cannot grant access.
+## Cấu hình Manual Chrome Tabs
 
-**Setup:**
-
-1. Set `MANUAL_CHROME_ENABLED=true` and a non-empty `ALLOWED_HOSTS` (only these hosts may be audited — initial URLs and every redirect hop are checked).
-2. Run the API and worker against the same Redis. The API generates a random boot identity on startup and stores it in Redis; the worker reads it from there. There is no shared instance-id env var, and restarting the API invalidates any open profile (see recovery below).
-3. The dedicated profile lives in `MANUAL_CHROME_PROFILE_DIR` (default `.lh-audit/chrome-profile`) on the CDP port `MANUAL_CHROME_PORT` (default `9222`).
-4. By default the API auto-launches the dedicated profile during startup. Set `MANUAL_CHROME_AUTO_OPEN=false` to require an explicit `Open Chrome profile` click in the UI instead. Auto-launch failures (port in use, Chrome missing, startup timeout) are logged and do not crash the server.
-
-**Usage:**
-
-1. In the UI, switch to `Manual Chrome Tabs` and click `Open Chrome profile`. The backend launches the dedicated profile (it never attaches to a Chrome it did not launch).
-2. Complete OTP / login / verification manually in each tab on an allowed host, and leave those pages open.
-3. Click `Scan tabs`, select the tabs to audit, choose shared Lighthouse settings, and run. Chrome stays open after scans and audits so the verified state is reusable.
-
-**Privacy:**
-
-- The UI, reports, workbook, logs, and `meta.json` use sanitized display URLs (`origin + pathname`); query strings and fragments are never persisted in plaintext. Raw audit URLs live only inside the encrypted queued job config.
-- Do not audit URLs containing OTPs, password-reset tokens, or one-time session tokens in the query string or fragment.
-- HTML evidence is off by default. Enabling it requires an explicit consent checkbox because authenticated page content (screenshots, DOM, network URLs) is written to disk and served through tokenized evidence links. Per-file byte and total file-count limits apply (`MANUAL_CHROME_MAX_EVIDENCE_BYTES`, `MANUAL_CHROME_MAX_EVIDENCE_FILES`).
-- Lighthouse may reload or navigate the selected tab during measurement; pages that depend on transient in-memory state may need to be re-prepared.
-
-**Recovery:** If the server restarts while Chrome remains open, the browser is treated as unowned and manual operations fail closed — close that Chrome and click `Open Chrome profile` again. If the configured port is already in use by another Chrome, the backend returns an error instead of attaching; close it or change `MANUAL_CHROME_PORT`.
-
-## Verification
+### **Bật chế độ**
 
 ```bash
+MANUAL_CHROME_ENABLED=true
+ALLOWED_HOSTS=example.com,staging.example.com
+MANUAL_CHROME_PROFILE_DIR=.lh-audit/chrome-profile  # mặc định
+MANUAL_CHROME_PORT=9222                              # mặc định
+MANUAL_CHROME_AUTO_OPEN=true                         # tự động mở Chrome khi start
+```
+
+### **Sử dụng**
+
+1. **Mở Chrome profile:**
+    - UI → chọn `Manual Chrome Tabs` → click `Open Chrome profile`
+    - Hoặc để `MANUAL_CHROME_AUTO_OPEN=true` để tự động mở khi start server
+
+2. **Xác thực thủ công:**
+    - Login/OTP trong các tab (chỉ domain trong `ALLOWED_HOSTS`)
+    - Giữ các tab mở
+
+3. **Chạy audit:**
+    - Click `Scan tabs` → chọn tab cần audit → chạy
+    - Chrome giữ nguyên sau audit, không cần login lại
+
+### **Bảo mật & Privacy**
+
+- **URL sanitization:** Chỉ lưu `origin + pathname`, không lưu query string/fragment
+- **HTML evidence:** Tắt mặc định, cần checkbox đồng ý để bật
+    - Giới hạn: `MANUAL_CHROME_MAX_EVIDENCE_BYTES`, `MANUAL_CHROME_MAX_EVIDENCE_FILES`
+- **Không audit URL chứa:** OTP, password-reset token, session token trong query/fragment
+
+### **Xử lý lỗi**
+
+| Tình huống                        | Giải pháp                                          |
+| --------------------------------- | -------------------------------------------------- |
+| Server restart khi Chrome đang mở | Đóng Chrome → click `Open Chrome profile` lại      |
+| Port `9222` bị chiếm              | Đóng Chrome khác hoặc đổi `MANUAL_CHROME_PORT`     |
+| Auto-launch thất bại              | Kiểm tra log, click `Open Chrome profile` thủ công |
+
+---
+
+## Kiểm tra & Testing
+
+### **Chạy tests**
+
+```bash
+# Type checking
 pnpm run typecheck
+
+# Unit tests
 pnpm test
+
+# Build verification
 pnpm run build
 ```
 
-Full acceptance still requires a staging run with Redis and Chrome:
+### **Acceptance Testing** _(staging)_
 
-- 3 paths x 2 form factors x 5 runs against `https://example.com`.
-- Basic Auth success/failure smoke.
-- Dummy form-login fixture smoke.
-- One killed Chrome run to verify degraded report output.
-- 24-hour cleanup verification.
+- 3 paths × 2 form factors × 5 runs
+- Basic Auth success/failure
+- Form-login fixture
+- Chrome crash recovery
+- 24h cleanup verification
 
-Set `ALLOWED_HOSTS=staging.example.com,example.com` to restrict submitted base URLs.
+**Giới hạn domain:**
+
+```bash
+ALLOWED_HOSTS=staging.example.com,example.com
+```
+
+---
+
+## Cấu trúc dự án
+
+```
+.
+├── src/
+│   ├── api/          # Fastify API server
+│   ├── worker/       # BullMQ worker
+│   └── web/          # React + Vite UI
+├── .env.example      # Template biến môi trường
+├── package.json
+└── README.md
+```
+
+---
+
+## Troubleshooting
+
+### **Redis connection failed**
+
+```bash
+# Kiểm tra Redis đang chạy
+redis-cli ping
+
+# Hoặc cài Redis local
+# macOS: brew install redis && brew services start redis
+# Ubuntu: sudo apt install redis-server && sudo systemctl start redis
+```
+
+### **Chrome not found**
+
+- Đảm bảo Chrome/Chromium đã cài đặt
+- Hoặc cài Puppeteer Chrome: `npx puppeteer browsers install chrome`
+
+### **Port conflicts**
+
+- API port `3000`: Đổi `PORT` trong `.env`
+- Chrome CDP port `9222`: Đổi `MANUAL_CHROME_PORT`
+- Vite dev port `5173`: Đổi trong `vite.config.ts`
+
+---
+
+## License & Support
+
+Internal tool - FPT Software only.

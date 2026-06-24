@@ -1,9 +1,0 @@
-node_modules
-dist
-web/dist
-.npm-cache
-.git
-*.log
-coverage
-.DS_Store
-.env
