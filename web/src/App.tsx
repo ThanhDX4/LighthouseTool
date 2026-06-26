@@ -438,7 +438,7 @@ export function App() {
 
     const headerActions = (
         <>
-            {manualCapable && view !== "history" ? (
+            {view !== "history" ? (
                 <NavButton
                     icon={<MonitorSmartphone strokeWidth={1.8} />}
                     label="Manual Chrome tabs"
